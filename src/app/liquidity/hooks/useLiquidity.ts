@@ -258,8 +258,8 @@ export function useLiquidity() {
                   if ('args' in createEvent && createEvent.args) {
                     const createPairId = createEvent.args[2]?.toString()
                     if (createPairId === pairIdStr) {
-                      let rawToken0 = createEvent.args[0]?.toString() || token0Address
-                      let rawToken1 = createEvent.args[1]?.toString() || token1Address
+                      const rawToken0 = createEvent.args[0]?.toString() || token0Address
+                      const rawToken1 = createEvent.args[1]?.toString() || token1Address
                       
                       // Ensure proper token ordering (token0 < token1) as required by Pennysia AMM
                       if (rawToken0.toLowerCase() < rawToken1.toLowerCase()) {

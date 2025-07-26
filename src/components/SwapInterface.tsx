@@ -34,9 +34,10 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   const isConnected = authenticated && wallets.length > 0
   const address = wallets.length > 0 ? wallets[0].address : null
 
-  // Local state
+  // State for token selection and amounts
   const [selectedTokenA, setSelectedTokenA] = useState<Token | null>(null)
   const [selectedTokenB, setSelectedTokenB] = useState<Token | null>(null)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [inputAmount, setInputAmount] = useState('')
   const [outputAmount, setOutputAmount] = useState('')
   const [isCalculatingOutput, setIsCalculatingOutput] = useState(false) // When typing in "You Pay"
@@ -374,7 +375,6 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     }
 
   let isMounted = true
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const calculateOutput = async () => {
     try {

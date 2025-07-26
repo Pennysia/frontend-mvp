@@ -324,10 +324,15 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         const calculatedInput = await calculateInputAmount(value, selectedTokenA, selectedTokenB)
         if (!isUpdating.current.input) { // Only update if input isn't being actively edited
           setInputAmount(calculatedInput)
+          // Update the swap price when output changes
+          if (calculatedInput && value) {
+            setSwapPrice(calculateSwapPrice(calculatedInput, value))
+          }
         }
       } catch (error) {
         console.error('Error calculating input amount:', error)
         setInputAmount('')
+        setSwapPrice('')
       } finally {
         setIsCalculatingInput(false)
         isUpdating.current.output = false
@@ -658,7 +663,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
             <div className="flex-shrink-0">
               <button
                 onClick={handleTokenSelectorAClick}
-                className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800 hover:bg-gray-600 w-[120px]"
+                className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 w-[120px]"
               >
                 <div className="flex items-center space-x-2">
                   {selectedTokenA ? (
@@ -735,7 +740,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
             <div className="flex-shrink-0">
               <button
                 onClick={handleTokenSelectorBClick}
-                className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800  hover:bg-gray-600 w-[120px]"
+                className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800  hover:bg-gray-300 dark:hover:bg-gray-600 w-[120px]"
               >
                 <div className="flex items-center space-x-2">
                   {selectedTokenB ? (

@@ -409,11 +409,19 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     }
   }
 
-  timeoutId = setTimeout(calculateOutput, 300) // Debounce
+  // Clear any existing timeout to prevent multiple executions
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+  }
+
+  // Set new timeout
+  timeoutId = setTimeout(calculateOutput, 300) // Debounce 300ms
 
   return () => {
     isMounted = false
-    clearTimeout(timeoutId)
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
   }
 }, [inputAmount, selectedTokenA, selectedTokenB, sdk])
 

@@ -30,6 +30,7 @@ exports.PENNYSIA_CONSTANTS = {
     // Common addresses
     ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
     DEAD_ADDRESS: '0x000000000000000000000000000000000000dEaD',
+    ROUTER_ADDRESS: '0x1234567890123456789012345678901234567890', // TODO: Replace with actual Router contract address
     // Precision
     PRECISION_DECIMALS: 18,
     MAX_UINT256: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',

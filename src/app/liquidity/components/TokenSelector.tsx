@@ -138,7 +138,15 @@ export default function TokenSelector({ value, onChange, placeholder, chainId = 
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg shadow-xl z-50 max-h-80 overflow-hidden">
+        <>
+          {/* Dark blurred backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Dropdown content */}
+          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg shadow-xl z-50 max-h-80 overflow-hidden">
           {/* Search Input */}
           <div className="p-3 border-b border-gray-700 dark:border-gray-600">
             <div className="relative">
@@ -207,7 +215,8 @@ export default function TokenSelector({ value, onChange, placeholder, chainId = 
               ))
             )}
           </div>
-        </div>
+          </div>
+        </>
       )}
     </div>
   )

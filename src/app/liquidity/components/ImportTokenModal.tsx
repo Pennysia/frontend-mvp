@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useScrollLock } from '../hooks/useScrollLock'
-import TokenSelector from './TokenSelector'
+import TokenSelectorModal from '../../../components/TokenSelectorModal'
 import { useLiquidity } from '../hooks/useLiquidity'
-import { type Token } from '../services/tokenService'
+import { type Token } from '../../../components/TokenSelectorModal'
 import toast from 'react-hot-toast'
 
 interface ImportPositionModalProps {
@@ -18,6 +18,8 @@ export default function ImportPositionModal({ isOpen, onClose, onPositionImporte
   const [selectedTokenA, setSelectedTokenA] = useState<Token | null>(null)
   const [selectedTokenB, setSelectedTokenB] = useState<Token | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [showTokenSelectorA, setShowTokenSelectorA] = useState(false)
+  const [showTokenSelectorB, setShowTokenSelectorB] = useState(false)
   
   const { fetchPositions } = useLiquidity()
   
@@ -139,12 +141,40 @@ export default function ImportPositionModal({ isOpen, onClose, onPositionImporte
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 First Token
               </label>
-              <TokenSelector
-                value={selectedTokenA}
-                onChange={handleTokenASelection}
-                placeholder="Select first token"
-                excludeToken={selectedTokenB}
-              />
+              <button
+                onClick={() => setShowTokenSelectorA(true)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  {selectedTokenA ? (
+                    <>
+                      {selectedTokenA.logoURI ? (
+                        <img
+                          src={selectedTokenA.logoURI}
+                          alt={selectedTokenA.symbol}
+                          className="w-6 h-6 rounded-full"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                            if (fallback) fallback.style.display = 'flex'
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs ${
+                          selectedTokenA.logoURI ? 'hidden' : 'flex'
+                        }`}
+                      >
+                        {selectedTokenA.symbol[0]}
+                      </div>
+                      <span className="text-white font-medium">{selectedTokenA.symbol}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-400">Select first token</span>
+                  )}
+                </div>
+                <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+              </button>
             </div>
             
             {/* Second Token Selector */}
@@ -152,12 +182,40 @@ export default function ImportPositionModal({ isOpen, onClose, onPositionImporte
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Second Token
               </label>
-              <TokenSelector
-                value={selectedTokenB}
-                onChange={handleTokenBSelection}
-                placeholder="Select second token"
-                excludeToken={selectedTokenA}
-              />
+              <button
+                onClick={() => setShowTokenSelectorB(true)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  {selectedTokenB ? (
+                    <>
+                      {selectedTokenB.logoURI ? (
+                        <img
+                          src={selectedTokenB.logoURI}
+                          alt={selectedTokenB.symbol}
+                          className="w-6 h-6 rounded-full"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                            if (fallback) fallback.style.display = 'flex'
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs ${
+                          selectedTokenB.logoURI ? 'hidden' : 'flex'
+                        }`}
+                      >
+                        {selectedTokenB.symbol[0]}
+                      </div>
+                      <span className="text-white font-medium">{selectedTokenB.symbol}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-400">Select second token</span>
+                  )}
+                </div>
+                <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+              </button>
             </div>
           </div>
           
@@ -185,6 +243,23 @@ export default function ImportPositionModal({ isOpen, onClose, onPositionImporte
           )}
         </div>
       </div>
+      
+      {/* Token Selector Modals */}
+      <TokenSelectorModal
+        isOpen={showTokenSelectorA}
+        onClose={() => setShowTokenSelectorA(false)}
+        onTokenSelect={handleTokenASelection}
+        title="Select first token"
+        excludeToken={selectedTokenB}
+      />
+      
+      <TokenSelectorModal
+        isOpen={showTokenSelectorB}
+        onClose={() => setShowTokenSelectorB(false)}
+        onTokenSelect={handleTokenBSelection}
+        title="Select second token"
+        excludeToken={selectedTokenA}
+      />
     </div>
   )
 }

@@ -16,6 +16,13 @@ import clsx from 'clsx'
 
 const navigation = [
   { 
+    name: 'Market', 
+    href: '/market', 
+    icon: ChartBarIcon, 
+    iconSolid: ChartBarIconSolid,
+    description: 'Protocol metrics and insights'
+  },
+  { 
     name: 'Swap', 
     href: '/swap', 
     icon: ArrowsRightLeftIcon, 
@@ -28,13 +35,6 @@ const navigation = [
     icon: BeakerIcon, 
     iconSolid: BeakerIconSolid,
     description: 'Provide liquidity and manage your portfolio'
-  },
-  { 
-    name: 'Analytics', 
-    href: '/analytics', 
-    icon: ChartBarIcon, 
-    iconSolid: ChartBarIconSolid,
-    description: 'Protocol metrics and insights'
   },
 ]
 

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { XMarkIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
-import TokenSelector from './TokenSelector'
+import { XMarkIcon, ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import TokenSelectorModal from '../../../components/TokenSelectorModal'
 import DirectionSlider from './DirectionSlider'
 import { useLiquidity } from '../hooks/useLiquidity'
 import { useLiquidityActions } from '../hooks/useLiquidityActions'
 import { useScrollLock } from '../hooks/useScrollLock'
 import toast from 'react-hot-toast'
-import { tokenService, type Token } from '../services/tokenService'
+import { type Token } from '../../../components/TokenSelectorModal'
 import TransactionLoadingOverlay from '../../../components/ui/TransactionLoadingOverlay'
 import { ethers } from 'ethers'
 import { useStore } from '../../../store/useStore'
@@ -57,6 +57,8 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   const [calculatedPrice, setCalculatedPrice] = useState<{ tokenAToB: number; tokenBToA: number } | null>(null)
   const [poolReserves, setPoolReserves] = useState<{ reserve0: bigint; reserve1: bigint } | null>(null)
   const [isLoadingPoolData, setIsLoadingPoolData] = useState(false)
+  const [showTokenSelectorA, setShowTokenSelectorA] = useState(false)
+  const [showTokenSelectorB, setShowTokenSelectorB] = useState(false)
 
   const { isAuthenticated } = useLiquidity()
   const { performAddLiquidity } = useLiquidityActions()
@@ -84,16 +86,19 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   const handleTokenASelection = (token: Token | null) => {
     if (!token) {
       setSelectedTokenA(null)
+      setShowTokenSelectorA(false)
       return
     }
 
     // Check if same as TokenB
     if (selectedTokenB && token.address === selectedTokenB.address) {
       toast.error('Cannot select the same token for both positions')
+      setShowTokenSelectorA(false)
       return
     }
 
     setSelectedTokenA(token)
+    setShowTokenSelectorA(false)
     
     // If both tokens are selected, sort them
     if (selectedTokenB) {
@@ -115,16 +120,19 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   const handleTokenBSelection = (token: Token | null) => {
     if (!token) {
       setSelectedTokenB(null)
+      setShowTokenSelectorB(false)
       return
     }
 
     // Check if same as TokenA
     if (selectedTokenA && token.address === selectedTokenA.address) {
       toast.error('Cannot select the same token for both positions')
+      setShowTokenSelectorB(false)
       return
     }
 
     setSelectedTokenB(token)
+    setShowTokenSelectorB(false)
     
     // If both tokens are selected, sort them
     if (selectedTokenA) {
@@ -362,15 +370,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     }
   }, [selectedPosition, isOpen])
 
-  const fetchTokenBySymbol = async (symbol: string): Promise<Token | null> => {
-    try {
-      const tokens = await tokenService.searchTokens(symbol, 57054)
-      return tokens.find(token => token.symbol.toLowerCase() === symbol.toLowerCase()) || null
-    } catch (error) {
-      console.error('Error fetching token by symbol:', error)
-      return null
-    }
-  }
+  // Token fetching is now handled by TokenSelectorModal
 
   if (!isOpen) return null
 
@@ -403,24 +403,46 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">First Token</label>
-          <TokenSelector
-            value={selectedTokenA}
-            onChange={handleTokenASelection}
-            placeholder="Select first token"
-            chainId={57054}
-            excludeToken={selectedTokenB} // Prevent selecting the same token
-          />
+          <button
+            onClick={() => setShowTokenSelectorA(true)}
+            className="w-full flex items-center justify-between p-3 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              {selectedTokenA ? (
+                <>
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                    {selectedTokenA.symbol.charAt(0)}
+                  </div>
+                  <span className="text-white">{selectedTokenA.symbol}</span>
+                </>
+              ) : (
+                <span className="text-gray-400">Select first token</span>
+              )}
+            </div>
+            <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+          </button>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Second Token</label>
-          <TokenSelector
-            value={selectedTokenB}
-            onChange={handleTokenBSelection}
-            placeholder="Select second token"
-            chainId={57054}
-            excludeToken={selectedTokenA} // Prevent selecting the same token
-          />
+          <button
+            onClick={() => setShowTokenSelectorB(true)}
+            className="w-full flex items-center justify-between p-3 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              {selectedTokenB ? (
+                <>
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                    {selectedTokenB.symbol.charAt(0)}
+                  </div>
+                  <span className="text-white">{selectedTokenB.symbol}</span>
+                </>
+              ) : (
+                <span className="text-gray-400">Select second token</span>
+              )}
+            </div>
+            <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+          </button>
         </div>
 
         {poolKey && (
@@ -763,6 +785,23 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
           </div>
         </div>
       </div>
+      
+      {/* Token Selector Modals */}
+      <TokenSelectorModal
+        isOpen={showTokenSelectorA}
+        onClose={() => setShowTokenSelectorA(false)}
+        onTokenSelect={handleTokenASelection}
+        title="Select first token"
+        excludeToken={selectedTokenB}
+      />
+      
+      <TokenSelectorModal
+        isOpen={showTokenSelectorB}
+        onClose={() => setShowTokenSelectorB(false)}
+        onTokenSelect={handleTokenBSelection}
+        title="Select second token"
+        excludeToken={selectedTokenA}
+      />
     </div>
   )
 }

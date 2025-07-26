@@ -374,7 +374,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     }
 
   let isMounted = true
-  let timeoutId: NodeJS.Timeout
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const calculateOutput = async () => {
     try {
@@ -410,17 +410,17 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   }
 
   // Clear any existing timeout to prevent multiple executions
-  if (timeoutId) {
-    clearTimeout(timeoutId)
+  if (timeoutRef.current) {
+    clearTimeout(timeoutRef.current)
   }
 
   // Set new timeout
-  timeoutId = setTimeout(calculateOutput, 300) // Debounce 300ms
+  timeoutRef.current = setTimeout(calculateOutput, 300) // Debounce 300ms
 
   return () => {
     isMounted = false
-    if (timeoutId) {
-      clearTimeout(timeoutId)
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
     }
   }
 }, [inputAmount, selectedTokenA, selectedTokenB, sdk])

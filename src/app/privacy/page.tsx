@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
                 Users interact with Pennysia via third-party self-custodial wallets. These wallets are not owned or controlled by Pennysia and are governed by the terms and conditions of their respective providers. You are solely responsible for reviewing and understanding the terms, fees, and risks associated with your wallet provider. Pennysia assumes no liability for any issues or losses arising from your use of third-party wallets.
               </p>
               <p className="mb-4">
-                Links or access to third-party websites ("Third-Party Websites") may be available through the Interface. Pennysia is not responsible for the content, products, services, or promotions offered by these Third-Party Websites. You assume full responsibility and all risks associated with your use of Third-Party Websites.
+                Links or access to third-party websites (&quot;Third-Party Websites&quot;) may be available through the Interface. Pennysia is not responsible for the content, products, services, or promotions offered by these Third-Party Websites. You assume full responsibility and all risks associated with your use of Third-Party Websites.
               </p>
             </div>
 

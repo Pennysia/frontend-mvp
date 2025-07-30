@@ -1,11 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-    CodeBracketIcon as GithubIcon,
-    GlobeAltIcon,
-    AtSymbolIcon,
-} from "@heroicons/react/24/outline";
+import { CodeBracketIcon } from "@heroicons/react/24/outline";
 
 export default function HomeFooter() {
     return (
@@ -23,11 +19,11 @@ export default function HomeFooter() {
                                 liquidity provision.
                             </p> */}
                             <p className="text-gray-400 dark:text-gray-600 text-[10px] mb-6">
-                                Pennysia Labs hereby provides information and resources regarding the fundamental principles and functionalities of its decentralized, non-custodial liquidity protocol, referred to herein as the "Pennysia Protocol." 
+                                Pennysia Labs hereby provides information and resources regarding the fundamental principles and functionalities of its decentralized, non-custodial liquidity protocol, referred to herein as the &quot;Pennysia Protocol.&quot; 
                                 The Pennysia Protocol is composed of open-source, self-executing smart contracts, 
                                 which are deployed on multiple permissionless public blockchains, including, 
-                                but not limited to, Ethereum (collectively, the "Protocol"). 
-                                Pennysia Labs does not control, operate, or maintain any instance or version of the Pennysia Protocol 
+                                but not limited to, Ethereum (collectively, the &quot;Protocol&quot;). 
+                                The Interface is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind. Pennysia Labs does not control, operate, or maintain any instance or version of the Pennysia Protocol 
                                 on any blockchain network, and shall not be held liable for any actions or inactions related to 
                                 the operation or deployment of the Protocol on any blockchain network.
                             </p>

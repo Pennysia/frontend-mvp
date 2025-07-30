@@ -17,23 +17,15 @@ export default function TermsOfService() {
 
           <div className="prose prose-gray dark:prose-invert max-w-none">
             <p className="mb-6">
-              This Terms of Service Agreement ("Agreement") explains and defines
+              This Terms of Service Agreement (&quot;Agreement&quot;) explains and defines
               the terms and conditions by which you may access and use the
-              Pennysia interface (the "Interface"). This Agreement must be read
-              carefully. By accessing or using the Interface, you signify that
-              you have read, understand, and agree to be bound by this Agreement
-              in its entirety. If you do not agree, you are not authorized to
-              access or use the Interface and should not use the Interface.
+              the Pennysia interface (the &quot;Interface&quot;). This Agreement must be read
+              carefully. By accessing or using the Interface, you signify that you have read, understand, and agree to be bound by this Agreement in its entirety. If you do not agree, you are not authorized to access or use the Interface and should not use the Interface.
             </p>
 
             <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg dark:border-yellow-600 p-4 mb-6">
               <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                <strong>Notice:</strong> This Agreement governs your use of the
-                Interface and contains important information, including a
-                binding arbitration provision and a class action waiver, both of
-                which impact your rights as to how disputes are resolved. You
-                should only access the Interface if you agree completely with
-                these terms.
+                <strong>Notice:</strong> This Agreement governs your use of the Interface and contains important information, including a binding arbitration provision and a class action waiver, both of which impact your rights as to how disputes are resolved. You should only access the Interface if you agree completely with these terms.
               </p>
             </div>
 
@@ -196,7 +188,7 @@ export default function TermsOfService() {
             <p className="mb-4">
               The Pennysia Interface and its contents, including but not limited
               to software, text, images, trademarks, service marks, copyrights,
-              patents, designs, and its overall "look and feel," are owned by us
+              patents, designs, and its overall &quot;look and feel,&quot; are owned by us
               and protected by applicable intellectual property laws, including
               those of the United States and foreign countries.
             </p>
@@ -377,7 +369,7 @@ export default function TermsOfService() {
               No Warranties
             </h2>
             <p className="mb-4">
-              The Interface is provided on an "AS IS" and "AS AVAILABLE" basis.
+              The Interface is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis.
               Pennysia disclaims all warranties, whether express or implied,
               including warranties of merchantability, fitness for a particular
               purpose, and non-infringement. We do not guarantee accuracy,
@@ -421,7 +413,8 @@ export default function TermsOfService() {
             <p className="mb-4">
               You are solely responsible for the custody and management of the
               cryptographic private keys to the digital asset wallets you hold.
-              We do not have custody, possession, or control of your digital
+              We owe no fiduciary duties to you beyond those expressly stated in
+              this Agreement. You are responsible for the role of your digital
               assets at any time. This means you should never share your wallet
               credentials, including your private keys or seed phrases, with
               anyone. We accept no responsibility or liability for any loss or
@@ -509,7 +502,7 @@ export default function TermsOfService() {
               assets are highly volatile due to factors including (but not
               limited to) adoption, speculation, technology, security, and
               regulation. You acknowledge and accept that the cost and speed of
-              transacting with cryptographic and ฺ Blockchain-based systems such
+              transacting with cryptographic and Blockchain-based systems such
               as Ethereum are variable and may increase dramatically at any
               time. You further acknowledge and accept the risk that your
               digital assets may lose some or all of their value while they are
@@ -661,12 +654,15 @@ export default function TermsOfService() {
             </h2>
             <p className="mb-4">
               If a potential dispute arises between you and us, you agree to
-              contact us first by sending your inquiries to <a className="underline font-semibold" href="mailto:legal@pennysia.com">legal@pennysia.com</a> so that we can attempt to
-              resolve it informally through good faith negotiations. We will use
-              our best efforts to resolve any disputes. However, If we are
-              unable to reach an informal resolution within sixty days of
-              receiving your email, then you and we agree to resolve the
-              potential dispute through the process set forth below.
+              contact us first by sending your inquiries to{" "}
+              <a className="underline font-semibold" href="mailto:legal@pennysia.com">
+                legal@pennysia.com
+              </a>{" "}
+              so that we can attempt to resolve it informally through good faith
+              negotiations. We will use our best efforts to resolve any disputes.
+              However, If we are unable to reach an informal resolution within
+              sixty days of receiving your email, then you and we agree to
+              resolve the potential dispute through the process set forth below.
             </p>
             <p className="mb-6">
               Any claim or controversy arising out of or relating to any of our
@@ -778,10 +774,10 @@ export default function TermsOfService() {
               Entire Agreement
             </h2>
             <p className="mb-6">
-              These terms constitute the entire agreement between you and us
-              with respect to the subject matter hereof. This Agreement
-              supersedes any and all prior or contemporaneous written and oral
-              agreements, communications and other understandings (if any)
+              This Agreement constitutes the entire agreement between you and
+              Pennysia with respect to the subject matter hereof and supersedes
+              all prior or contemporaneous written and oral agreements, and all
+              other communications, understandings and agreements (if any)
               relating to the subject matter of the terms.
             </p>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 mt-8">

@@ -59,7 +59,7 @@ export default function TermsOfService() {
             <p className="mb-4">
               Pennysia reserves the right to modify or change these Terms at any
               time, at its sole discretion. Any changes will be announced on the
-              Pennysia website, where the "Last Updated" date at the top of this
+              Pennysia website, where the &quot;Last Updated&quot; date at the top of this
               Agreement will be revised to reflect the latest version. All
               modifications or changes to these Terms will become effective upon
               publication on the website or other release to users.
@@ -302,7 +302,7 @@ export default function TermsOfService() {
               </li>
               <li>
                 <strong>Interference and Security Circumvention</strong> –
-                Disrupting other users' access or circumventing security
+                Disrupting other users&apos; access or circumventing security
                 features.
               </li>
               <li>
@@ -577,7 +577,7 @@ export default function TermsOfService() {
                 regulation; and
               </li>
               <li>
-                any other party's access and use of the Interface with your
+                any other party&apos;s access and use of the Interface with your
                 assistance or using any device or account that you own or
                 control.
               </li>
@@ -703,11 +703,7 @@ export default function TermsOfService() {
               conflict of law principles.
             </p>
             <p className="mb-4">
-              Any dispute or claim shall be submitted to the{" "}
-              <strong>
-                exclusive jurisdiction of the courts of Labuan, Malaysia
-              </strong>
-              . You consent to personal jurisdiction and venue in Labuan,
+              Any dispute or claim shall be submitted to the <strong>exclusive jurisdiction of the courts of Labuan, Malaysia</strong>. You consent to personal jurisdiction and venue in Labuan,
               acknowledging that the Interface is administered from Labuan,
               Malaysia.
             </p>
@@ -733,7 +729,7 @@ export default function TermsOfService() {
               not (and cannot) guarantee market best pricing or best execution
               through our Products or when using our Auto Routing feature, which
               routes trades across liquidity pools on the Protocol only. Any
-              references in a Product to "best price" does not constitute a
+              references in a Product to &quot;best price&quot; does not constitute a
               representation or warranty about pricing available through such
               Product, on the Protocol, or elsewhere.
             </p>

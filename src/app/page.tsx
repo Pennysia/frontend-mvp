@@ -8,6 +8,7 @@ import {
   BeakerIcon,
   UserGroupIcon
 } from '@heroicons/react/24/outline'
+import HomeFooter from '@/components/HomeFooter'
 
 export default function Home() {
   return (
@@ -182,6 +183,8 @@ export default function Home() {
           </div>
         </div>
       </main>
+      
+      <HomeFooter />
     </div>
   )
 }

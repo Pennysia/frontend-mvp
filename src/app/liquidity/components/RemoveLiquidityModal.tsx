@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { XMarkIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useLiquidity, LiquidityPosition } from '../hooks/useLiquidity'
 import { useLiquidityActions } from '../hooks/useLiquidityActions'
@@ -26,11 +26,11 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
   const [isRemoving, setIsRemoving] = useState(false)
   const [withdrawalMode, setWithdrawalMode] = useState<'percentage' | 'amount'>('percentage')
 
-  // Individual withdrawal amounts for each LP token type
-  const [token0Long, setToken0Long] = useState<WithdrawalAmount>({ percentage: 0, amount: '0', usePercentage: true })
-  const [token0Short, setToken0Short] = useState<WithdrawalAmount>({ percentage: 0, amount: '0', usePercentage: true })
-  const [token1Long, setToken1Long] = useState<WithdrawalAmount>({ percentage: 0, amount: '0', usePercentage: true })
-  const [token1Short, setToken1Short] = useState<WithdrawalAmount>({ percentage: 0, amount: '0', usePercentage: true })
+  // Individual withdrawal amounts for each LP token type - managed locally
+  const [token0Long, setToken0Long] = useState<WithdrawalAmount>({ percentage: 0, amount: '', usePercentage: true })
+  const [token0Short, setToken0Short] = useState<WithdrawalAmount>({ percentage: 0, amount: '', usePercentage: true })
+  const [token1Long, setToken1Long] = useState<WithdrawalAmount>({ percentage: 0, amount: '', usePercentage: true })
+  const [token1Short, setToken1Short] = useState<WithdrawalAmount>({ percentage: 0, amount: '', usePercentage: true })
 
   const { performRemoveLiquidity } = useLiquidityActions()
   const { isAuthenticated } = useLiquidity()
@@ -39,13 +39,13 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
   useScrollLock(isOpen)
 
   // Calculate withdrawal amount based on percentage or absolute amount
-  const calculateWithdrawalAmount = (withdrawal: WithdrawalAmount, maxAmount: string): string => {
-    if (withdrawal.usePercentage) {
+  const calculateWithdrawalAmount = (amount: string, percentage: number, usePercentage: boolean, maxAmount: string): string => {
+    if (usePercentage) {
       const max = parseFloat(maxAmount)
-      const amount = (max * withdrawal.percentage) / 100
-      return amount.toString()
+      const calculatedAmount = (max * percentage) / 100
+      return calculatedAmount.toString()
     } else {
-      return withdrawal.amount
+      return amount || '0'
     }
   }
 
@@ -57,10 +57,10 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
     }
 
     // Calculate actual LP token withdrawal amounts (not underlying token amounts)
-    const liquidity0Long = calculateWithdrawalAmount(token0Long, position.userLongX)
-    const liquidity0Short = calculateWithdrawalAmount(token0Short, position.userShortX)
-    const liquidity1Long = calculateWithdrawalAmount(token1Long, position.userLongY)
-    const liquidity1Short = calculateWithdrawalAmount(token1Short, position.userShortY)
+    const liquidity0Long = calculateWithdrawalAmount(token0Long.amount, token0Long.percentage, token0Long.usePercentage, position.userLongX)
+    const liquidity0Short = calculateWithdrawalAmount(token0Short.amount, token0Short.percentage, token0Short.usePercentage, position.userShortX)
+    const liquidity1Long = calculateWithdrawalAmount(token1Long.amount, token1Long.percentage, token1Long.usePercentage, position.userLongY)
+    const liquidity1Short = calculateWithdrawalAmount(token1Short.amount, token1Short.percentage, token1Short.usePercentage, position.userShortY)
 
     // Check if any amount is being withdrawn
     const totalWithdrawal = parseFloat(liquidity0Long) + parseFloat(liquidity0Short) + parseFloat(liquidity1Long) + parseFloat(liquidity1Short)
@@ -99,11 +99,22 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
 
   // Helper function to set percentage for all tokens
   const setAllPercentages = (percentage: number) => {
-    setToken0Long(prev => ({ ...prev, percentage, usePercentage: true }))
-    setToken0Short(prev => ({ ...prev, percentage, usePercentage: true }))
-    setToken1Long(prev => ({ ...prev, percentage, usePercentage: true }))
-    setToken1Short(prev => ({ ...prev, percentage, usePercentage: true }))
+    setToken0Long({ percentage, amount: '', usePercentage: true })
+    setToken0Short({ percentage, amount: '', usePercentage: true })
+    setToken1Long({ percentage, amount: '', usePercentage: true })
+    setToken1Short({ percentage, amount: '', usePercentage: true })
   }
+
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset all withdrawal states to empty
+      setToken0Long({ percentage: 0, amount: '', usePercentage: true });
+      setToken0Short({ percentage: 0, amount: '', usePercentage: true });
+      setToken1Long({ percentage: 0, amount: '', usePercentage: true });
+      setToken1Short({ percentage: 0, amount: '', usePercentage: true });
+      setWithdrawalMode('percentage');
+    }
+  }, [isOpen]);
 
   // Early return after all hooks
   if (!isOpen || !position) return null
@@ -113,33 +124,59 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
     tokenSymbol,
     positionType,
     maxAmount,
-    withdrawal,
-    setWithdrawal,
+    onAmountChange,
+    onPercentageChange,
+    currentAmount,
+    currentPercentage,
+    usePercentage,
     color
   }: {
     tokenSymbol: string
     positionType: 'Long' | 'Short'
     maxAmount: string
-    withdrawal: WithdrawalAmount
-    setWithdrawal: (withdrawal: WithdrawalAmount) => void
+    onAmountChange: (amount: string) => void
+    onPercentageChange: (percentage: number) => void
+    currentAmount: string
+    currentPercentage: number
+    usePercentage: boolean
     color: string
   }) => {
+    const [localAmount, setLocalAmount] = useState(currentAmount);
+    const maxAmountNum = parseFloat(maxAmount);
+
+    useEffect(() => {
+        if (usePercentage) {
+            const calculatedAmount = (maxAmountNum * currentPercentage / 100).toString();
+            setLocalAmount(calculatedAmount);
+            onAmountChange(calculatedAmount);
+        } else {
+            setLocalAmount(currentAmount);
+        }
+    }, [currentAmount, currentPercentage, usePercentage, maxAmountNum, onAmountChange]);
+
     const handlePercentageChange = (percentage: number) => {
-      setWithdrawal({ ...withdrawal, percentage, usePercentage: true })
+      onPercentageChange(percentage);
     }
 
-    const handleAmountChange = (amount: string) => {
-      setWithdrawal({ ...withdrawal, amount, usePercentage: false })
-    }
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setLocalAmount(value); // Update local state for smooth typing
 
-    const maxAmountNum = parseFloat(maxAmount)
-    const currentAmount = withdrawal.usePercentage
-      ? (maxAmountNum * withdrawal.percentage / 100).toFixed(6)
-      : withdrawal.amount
+      // Only allow numbers and a single decimal point
+      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+        const numValue = parseFloat(value);
+        if (value === '' || isNaN(numValue)) {
+            onAmountChange('');
+        } else {
+            const clampedValue = Math.min(numValue, maxAmountNum);
+            onAmountChange(clampedValue.toString());
+        }
+      }
+    }
 
     return (
-      <div className="rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="rounded-2xl">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex flex-col items-start space-x-2 ">
             <span className={`text-xs font-normal ${
               positionType === 'Long' ? 'text-green-500' : 'text-red-500'
@@ -150,60 +187,47 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
               {tokenSymbol}
             </span>
           </div>
-          <div className="flex flex-col text-sm text-gray-600 dark:text-gray-400 items-end">
-            <p className="text-xs font-light">Available:</p>
-            <p>{parseFloat(maxAmount).toFixed(6)}</p>
+          <div className="h-full flex flex-row gap-2 text-sm text-gray-400 dark:text-gray-600 items-center">
+            <p className="text-sm">{parseFloat(maxAmount).toFixed(12)} </p>
+            <button
+              type="button"
+              onClick={() => handlePercentageChange(100)}
+              className="h-full text-xs font-normal text-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              Max
+            </button>
           </div>
         </div>
 
-        {/* Percentage Controls */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Percentage</label>
-            <span className="text-sm text-gray-600 dark:text-gray-400">{withdrawal.percentage}%</span>
-          </div>
-          <div className="relative">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={withdrawal.percentage}
-              onChange={(e) => handlePercentageChange(Number(e.target.value))}
-              className="w-full h-3 rounded-lg appearance-none cursor-pointer slider"
-              style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${withdrawal.percentage}%, #d1d5db ${withdrawal.percentage}%, #d1d5db 100%)`
-              }}
-            />
-          </div>
-          <div className="flex justify-between mt-2 space-x-1">
+        {/* Amount Input */}
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={localAmount}
+            onChange={handleAmountChange}
+            onKeyDown={(e) => {
+              // Prevent 'e', 'E', '+', '-' keys
+              if (['e', 'E', '+', '-'].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            placeholder="0.00"
+            className="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-lg px-3 py-2 text-right text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoComplete="off"
+          />
+        </div>
+        <div className="flex justify-between mt-2 space-x-1 w-full">
             {[25, 50, 75, 100].map((percent) => (
               <button
                 key={percent}
                 onClick={() => handlePercentageChange(percent)}
-                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
+                className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
               >
                 {percent}%
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Amount Input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount</label>
-          <input
-            type="number"
-            value={withdrawal.usePercentage ? currentAmount : withdrawal.amount}
-            onChange={(e) => handleAmountChange(e.target.value)}
-
-            max={maxAmount}
-            min="0"
-            step="0.000001"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            placeholder="0.000000"
-            autoComplete="off"
-          />
-        </div>
       </div>
     )
   }
@@ -254,16 +278,19 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
 
           {/* Individual Token Controls */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Withdraw by Token Type</h3>
+            {/* <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Withdraw by Token Type</h3> */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Token 0 Long */}
-              <div className="bg-gray-200/30 dark:bg-gray-800/30 rounded-lg p-4">
+              <div className="bg-gray-200/30 dark:bg-gray-800/30 rounded-lg p-4 space-y-4">
                 <TokenWithdrawalControl
                   tokenSymbol={position.token0Symbol}
                   positionType="Long"
                   maxAmount={position.userLongX}
-                  withdrawal={token0Long}
-                  setWithdrawal={setToken0Long}
+                  onAmountChange={(amount) => setToken0Long(prev => ({ ...prev, amount, usePercentage: false }))}
+                  onPercentageChange={(percentage) => setToken0Long(prev => ({ ...prev, percentage, usePercentage: true }))}
+                  currentAmount={token0Long.amount}
+                  currentPercentage={token0Long.percentage}
+                  usePercentage={token0Long.usePercentage}
                   color="bg-green-500"
                 />
 
@@ -272,20 +299,26 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
                   tokenSymbol={position.token0Symbol}
                   positionType="Short"
                   maxAmount={position.userShortX}
-                  withdrawal={token0Short}
-                  setWithdrawal={setToken0Short}
+                  onAmountChange={(amount) => setToken0Short(prev => ({ ...prev, amount, usePercentage: false }))}
+                  onPercentageChange={(percentage) => setToken0Short(prev => ({ ...prev, percentage, usePercentage: true }))}
+                  currentAmount={token0Short.amount}
+                  currentPercentage={token0Short.percentage}
+                  usePercentage={token0Short.usePercentage}
                   color="bg-red-500"
                 />
               </div>
 
-              <div className="bg-gray-200/30 dark:bg-gray-800/30 rounded-lg p-4">
+              <div className="bg-gray-200/30 dark:bg-gray-800/30 rounded-lg p-4 space-y-4">
                 {/* Token 1 Long */}
                 <TokenWithdrawalControl
                   tokenSymbol={position.token1Symbol}
                   positionType="Long"
                   maxAmount={position.userLongY}
-                  withdrawal={token1Long}
-                  setWithdrawal={setToken1Long}
+                  onAmountChange={(amount) => setToken1Long(prev => ({ ...prev, amount, usePercentage: false }))}
+                  onPercentageChange={(percentage) => setToken1Long(prev => ({ ...prev, percentage, usePercentage: true }))}
+                  currentAmount={token1Long.amount}
+                  currentPercentage={token1Long.percentage}
+                  usePercentage={token1Long.usePercentage}
                   color="bg-green-500"
                 />
 
@@ -294,8 +327,11 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
                   tokenSymbol={position.token1Symbol}
                   positionType="Short"
                   maxAmount={position.userShortY}
-                  withdrawal={token1Short}
-                  setWithdrawal={setToken1Short}
+                  onAmountChange={(amount) => setToken1Short(prev => ({ ...prev, amount, usePercentage: false }))}
+                  onPercentageChange={(percentage) => setToken1Short(prev => ({ ...prev, percentage, usePercentage: true }))}
+                  currentAmount={token1Short.amount}
+                  currentPercentage={token1Short.percentage}
+                  usePercentage={token1Short.usePercentage}
                   color="bg-red-500"
                 />
               </div>

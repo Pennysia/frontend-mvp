@@ -420,7 +420,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   }
 
   // Set new timeout
-  timeoutRef.current = setTimeout(calculateOutput, 300) // Debounce 300ms
+  timeoutRef.current = setTimeout(calculateOutput, 100) // Debounce 300ms
 
   return () => {
     isMounted = false
@@ -896,7 +896,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
                       <div className="flex justify-between">
                         <span className="text-gray-400">Transaction:</span>
                         <a 
-                          href={`https://explorer.soniclabs.com/tx/${transactionResult.txHash}`}
+                          href={`https://testnet.sonicscan.org/tx/${transactionResult.txHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-400 hover:text-blue-300 font-mono text-sm"

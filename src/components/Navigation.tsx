@@ -6,24 +6,33 @@ import {
   ArrowsRightLeftIcon, 
   BeakerIcon, 
   ChartBarIcon,
-  WalletIcon 
+  WalletIcon,
+  HomeIcon,
 } from '@heroicons/react/24/outline'
 import {
   ArrowsRightLeftIcon as ArrowsRightLeftIconSolid,
   BeakerIcon as BeakerIconSolid,
   ChartBarIcon as ChartBarIconSolid,
-  WalletIcon as WalletIconSolid
+  WalletIcon as WalletIconSolid,
+  HomeIcon as HomeIconSolid
 } from '@heroicons/react/24/solid'
 import clsx from 'clsx'
 
 const navigation = [
   { 
-    name: 'Market', 
-    href: '/market', 
-    icon: ChartBarIcon, 
-    iconSolid: ChartBarIconSolid,
-    description: 'Protocol metrics and insights'
+    name: 'Home', 
+    href: '/', 
+    icon: HomeIcon, 
+    iconSolid: HomeIconSolid,
+    description: 'Welcome to Pennysia'
   },
+  // { 
+  //   name: 'Market', 
+  //   href: '/market', 
+  //   icon: ChartBarIcon, 
+  //   iconSolid: ChartBarIconSolid,
+  //   description: 'Protocol metrics and insights'
+  // },
   { 
     name: 'Swap', 
     href: '/swap', 

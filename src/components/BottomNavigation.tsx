@@ -6,21 +6,23 @@ import {
   ArrowsRightLeftIcon, 
   BeakerIcon, 
   ChartBarIcon,
+  HomeIcon,
 } from '@heroicons/react/24/outline'
 import {
   ArrowsRightLeftIcon as ArrowsRightLeftIconSolid,
   BeakerIcon as BeakerIconSolid,
   ChartBarIcon as ChartBarIconSolid,
+  HomeIcon as HomeIconSolid,
 } from '@heroicons/react/24/solid'
 import clsx from 'clsx'
 
 const navigation = [
   { 
-    name: 'Market', 
-    href: '/market', 
-    icon: ChartBarIcon, 
-    iconSolid: ChartBarIconSolid,
-    description: 'Protocol metrics and insights'
+    name: 'Home', 
+    href: '/', 
+    icon: HomeIcon, 
+    iconSolid: HomeIconSolid,
+    description: 'Welcome to Pennysia'
   },
   { 
     name: 'Swap', 
@@ -43,7 +45,7 @@ export default function BottomNavigation() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/90 dark:bg-black/90 backdrop-blur-xl border-t border-gray-200/50 dark:border-white/10 transition-colors duration-300">
-      <div className="flex justify-around items-center px-4 py-2 safe-area-pb">
+      <div className="flex justify-around items-center px-4 py-1 safe-area-pb">
         {navigation.map((item) => {
           const isActive = pathname === item.href
           const Icon = isActive ? item.iconSolid : item.icon
@@ -61,7 +63,7 @@ export default function BottomNavigation() {
               title={item.description}
             >
               <Icon className={clsx(
-                'h-6 w-6 mb-1 transition-colors',
+                'h-5 w-5 mb-1 transition-colors',
                 isActive ? 'text-blue-600 dark:text-blue-400' : ''
               )} />
               <span className="text-xs truncate">{item.name}</span>

@@ -188,7 +188,7 @@ export function useLiquidity() {
       try {
         // Get Mint events from a much larger block range to catch older positions
         const currentBlock = await provider.getBlockNumber()
-        const fromBlock = Math.max(0, currentBlock - 500000) // Increased to 500k blocks
+        const fromBlock = Math.max(0, currentBlock - 5000000) // Increased to 5M blocks
         
         console.log(`fetchPositions: Searching Mint events from block ${fromBlock} to ${currentBlock}`)
         

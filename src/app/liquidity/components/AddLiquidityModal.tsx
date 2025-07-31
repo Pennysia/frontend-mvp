@@ -203,6 +203,12 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       }
 
       const marketAddress = getMarketAddress(57054)
+      if (!marketAddress) {
+        console.error("Market address not found for chain ID 57054")
+        toast.error("Market address not found for the current chain.")
+        setIsSubmitting(false)
+        return
+      }
       const marketContract = new ethers.Contract(marketAddress, MARKET_ABI, provider)
       
       // Sort tokens to ensure proper order

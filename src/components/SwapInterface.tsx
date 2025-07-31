@@ -129,6 +129,11 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     try {
       if (!isConnected || !wallets.length) {
         // Use public RPC for read-only operations
+        if (!marketAddress) {
+          console.error("Market address not found for the current chain.");
+          // Optionally set an error state to inform the user
+          return null;
+        }
         const provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
         const marketContract = new ethers.Contract(marketAddress, MARKET_ABI, provider)
         
@@ -143,7 +148,12 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         const wallet = wallets[0]
         const provider = await wallet.getEthereumProvider()
         const ethersProvider = new ethers.BrowserProvider(provider)
-        const marketContract = new ethers.Contract(marketAddress, MARKET_ABI, ethersProvider)
+        const signer = await ethersProvider.getSigner()
+        if (!marketAddress) {
+          console.error("Market address not found for the current chain.");
+          return null;
+        }
+        const marketContract = new ethers.Contract(marketAddress, MARKET_ABI, signer)
         
         const [reserve0Long, reserve0Short, reserve1Long, reserve1Short] = await marketContract.getReserves(token0.address, token1.address)
         
@@ -447,8 +457,14 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       const ethersProvider = new ethers.BrowserProvider(provider)
       const signer = await ethersProvider.getSigner()
 
-      // Router address
+      const marketAddress = getMarketAddress(ChainId.SONIC_BLAZE_TESTNET)
       const routerAddress = getRouterAddress(ChainId.SONIC_BLAZE_TESTNET)
+
+      if (!marketAddress || !routerAddress) {
+        toast.error('Market or Router address not found for the current chain.')
+        setIsSwapping(false)
+        return
+      }
 
       // Create Router contract instance with signer
       const routerContract = new ethers.Contract(

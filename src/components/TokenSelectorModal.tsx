@@ -234,7 +234,8 @@ export default function TokenSelectorModal({
           }
         } catch (error) {
           // Silently skip tokens that fail (might not be valid ERC20)
-          console.debug(`Skipping ${tokenAddress}:`, error.message)
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.debug(`Skipping ${tokenAddress}:`, errorMessage)
         }
       }
       

@@ -192,11 +192,12 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
       }
 
-      const routerContract = new ethers.Contract(getRouterAddress(ChainId.SONIC_BLAZE_TESTNET), ROUTER_ABI, provider)
-      const amountOut = await routerContract.getAmountOut(amountIn, reserveIn, reserveOut)
+      // Calculate theoretical amount without slippage using exact reserve ratio
+      // This gives the theoretical amount: (amountIn * reserveOut) / reserveIn
+      const theoreticalAmountOut = (amountIn * reserveOut) / reserveIn;
       
-      // Format output amount with correct decimals
-      return ethers.formatUnits(amountOut, tokenOut.decimals)
+      // Return the theoretical amount without slippage for display
+      return ethers.formatUnits(theoreticalAmountOut, tokenOut.decimals)
     } catch (error) {
       console.error('Error calculating output amount:', error)
       return ''
@@ -237,11 +238,12 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
       }
 
-      const routerContract = new ethers.Contract(getRouterAddress(ChainId.SONIC_BLAZE_TESTNET), ROUTER_ABI, provider)
-      const amountIn = await routerContract.getAmountIn(amountOut, reserveIn, reserveOut)
+      // Calculate theoretical input amount without slippage using exact reserve ratio
+      // This gives the theoretical amount: (amountOut * reserveIn) / reserveOut
+      const theoreticalAmountIn = (amountOut * reserveIn) / reserveOut;
       
       // Format input amount with correct decimals
-      return ethers.formatUnits(amountIn, tokenIn.decimals)
+      return ethers.formatUnits(theoreticalAmountIn, tokenIn.decimals)
     } catch (error) {
       console.error('Error calculating input amount:', error)
       return ''
@@ -481,7 +483,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         await approveTx.wait()
       }
 
-      // Execute swap
+      // Execute swap and get the actual amount received
       const swapTx = await routerContract.swap(
         inputAmountWei,
         minOutputAmount,
@@ -494,12 +496,40 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       const receipt = await swapTx.wait()
       
       if (receipt.status === 1) {
-        // Show success result
+        // Get the actual amount received from the swap transaction
+        let actualAmountOut = outputAmount;
+        
+        try {
+          // Create interface using the actual Market ABI
+          const marketInterface = new ethers.Interface(MARKET_ABI);
+          
+          // Parse all logs to find the Swap event from Market contract
+          for (const log of receipt.logs || []) {
+            try {
+              const parsed = marketInterface.parseLog(log);
+              if (parsed && parsed.name === 'Swap') {
+                // Verify this is the correct swap event for our token pair
+                const tokenOutAddress = parsed.args.tokenOut;
+                if (tokenOutAddress && tokenOutAddress.toLowerCase() === selectedTokenB.address.toLowerCase()) {
+                  const amountOutBN = parsed.args.amountOut;
+                  actualAmountOut = ethers.formatUnits(amountOutBN, selectedTokenB.decimals);
+                  break;
+                }
+              }
+            } catch {
+              // Continue to next log if parsing fails
+            }
+          }
+        } catch (error) {
+          console.warn('Could not extract actual swap amount from transaction:', error);
+        }
+
+        // Show success result with actual received amount
         setTransactionResult({
           success: true,
           txHash: receipt.hash,
           amountIn: inputAmount,
-          amountOut: outputAmount,
+          amountOut: actualAmountOut,
           tokenInSymbol: selectedTokenA.symbol,
           tokenOutSymbol: selectedTokenB.symbol
         })

@@ -35,7 +35,7 @@ export default function RootLayout({
             <AuthBridge />
             <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white transition-colors duration-300">
               <Header key="header" />
-              <main key="main" className="pb-0 lg:pb-0">
+              <main key="main" className="bg-gray-50 dark:bg-[var(--background)]">
                 {children}
               </main>
               <BottomNavigation key="bottom-nav" />

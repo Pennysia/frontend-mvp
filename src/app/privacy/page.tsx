@@ -4,7 +4,7 @@ import HomeFooter from "@/components/HomeFooter";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[var(--background)] text-xs text-gray-600 dark:text-gray-300">
+    <div className="pt-20 md:pt-24 min-h-screen bg-gray-50 dark:bg-[var(--background)] text-xs text-gray-600 dark:text-gray-300">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-transparent p-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">

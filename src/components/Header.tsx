@@ -20,20 +20,22 @@ export default function Header() {
                     alt="Pennysia logo light"
                     width={64}
                     height={64}
-                    className=" block dark:hidden h-20 w-auto "
-                    objectFit='cover'
+                    className="block dark:hidden h-20 w-auto"
+                    objectFit='contain'
                     priority={true}
                     quality={100}
+                    unoptimized={true}
                   />
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-dark-transparent.svg"
                     alt="Pennysia logo dark"
                     width={64}
                     height={64}
-                    className="hidden dark:block h-20 w-auto "
-                    objectFit='cover'
+                    className="hidden dark:block h-20 w-auto"
+                    objectFit='contain'
                     priority={true}
                     quality={100}
+                    unoptimized={true}
                   />
               </Link>
 

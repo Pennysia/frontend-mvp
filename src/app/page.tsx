@@ -72,19 +72,20 @@ export default function Home() {
             {/* Card 1 */}
             <div className="p-6 bg-white dark:bg-[var(--background)]/50 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-left">
               <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
-                <Image
-                  src="/pennysia-brandkit/svg/full-logo/h1.svg"
-                  alt="Pennysia Logo"
-                  width={381}
-                  height={315}
-                  className="w-full h-auto"
-                  objectFit="cover"
-                  priority={true}
-                  quality={100}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  placeholder="blur"
-                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzgxIiBoZWlnaHQ9IjMxNSIgdmlld0JveD0iMCAwIDM4MSAzMTUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzODEiIGhlaWdodD0iMzE1IiBmaWxsPSIjRjJGMkYyIi8+Cjwvc3ZnPgo="
-                />
+                <div className="w-full h-auto mx-auto my-2 flex items-center justify-center transform-gpu">
+                  <Image
+                    src="/pennysia-brandkit/svg/full-logo/h1.svg"
+                    alt="Pennysia Logo"
+                    width={381}
+                    height={315}
+                    className="w-full h-auto max-w-[280px] sm:max-w-[320px] md:max-w-[381px]"
+                    objectFit="contain"
+                    priority={true}
+                    quality={100}
+                    sizes="(max-width: 768px) 280px, (max-width: 1200px) 320px, 381px"
+                    unoptimized={true}
+                  />
+                </div>
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
                 Lifetime Passive <br />
@@ -101,17 +102,20 @@ export default function Home() {
             {/* Card 2 */}
             <div className="p-6 bg-white dark:bg-[var(--background)]/50 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-left">
               <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
-                <Image
-                  src="/pennysia-brandkit/svg/full-logo/h2.svg"
-                  alt="Pennysia Logo"
-                  width={280}
-                  height={280}
-                  className="w-full h-auto"
-                  objectFit="cover"
-                  priority={true}
-                  quality={100}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
+                <div className="w-full h-auto mx-auto my-2 flex items-center justify-center transform-gpu">
+                  <Image
+                    src="/pennysia-brandkit/svg/full-logo/h2.svg"
+                    alt="Pennysia Logo"
+                    width={280}
+                    height={280}
+                    className="w-full h-auto max-w-[220px] sm:max-w-[250px] md:max-w-[280px]"
+                    objectFit="contain"
+                    priority={true}
+                    quality={100}
+                    sizes="(max-width: 768px) 220px, (max-width: 1200px) 250px, 280px"
+                    unoptimized={true}
+                  />
+                </div>
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
                 Bidirectional <br />
@@ -128,17 +132,20 @@ export default function Home() {
             {/* Card 3 */}
             <div className="p-6 bg-white dark:bg-[var(--background)]/50 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-left">
               <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
-                <Image
-                  src="/pennysia-brandkit/svg/full-logo/h3.svg"
-                  alt="Pennysia Logo"
-                  width={280}
-                  height={280}
-                  className="w-full h-auto"
-                  objectFit="cover"
-                  priority={true}
-                  quality={100}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
+                <div className="w-full h-auto mx-auto my-2 flex items-center justify-center transform-gpu">
+                  <Image
+                    src="/pennysia-brandkit/svg/full-logo/h3.svg"
+                    alt="Pennysia Logo"
+                    width={280}
+                    height={280}
+                    className="w-full h-auto max-w-[220px] sm:max-w-[250px] md:max-w-[280px]"
+                    objectFit="contain"
+                    priority={true}
+                    quality={100}
+                    sizes="(max-width: 768px) 220px, (max-width: 1200px) 250px, 280px"
+                    unoptimized={true}
+                  />
+                </div>
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
                 Decentralized and <br />

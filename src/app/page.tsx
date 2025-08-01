@@ -75,12 +75,11 @@ export default function Home() {
                 <Image
                   src="/pennysia-brandkit/svg/full-logo/h1.svg"
                   alt="Pennysia Logo"
-                  width={512}
-                  height={512}
-                  className="object-contain"
+                  width={381}
+                  height={315}
+                  className="object-cover w-full h-auto"
                   priority
                   quality={100}
-                  unoptimized
                 />
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
@@ -101,9 +100,9 @@ export default function Home() {
                 <Image
                   src="/pennysia-brandkit/svg/full-logo/h2.svg"
                   alt="Pennysia Logo"
-                  width={512}
-                  height={512}
-                  className="object-contain"
+                  width={280}
+                  height={280}
+                  className="object-cover w-full h-auto"
                   priority
                 />
               </div>
@@ -125,9 +124,9 @@ export default function Home() {
                 <Image
                   src="/pennysia-brandkit/svg/full-logo/h3.svg"
                   alt="Pennysia Logo"
-                  width={512}
-                  height={512}
-                  className="object-contain"
+                  width={280}
+                  height={280}
+                  className="object-cover w-full h-auto"
                   priority
                   quality={100}
                 />

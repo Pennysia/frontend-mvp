@@ -12,52 +12,45 @@ export default function Header() {
     <header className="fixed top-4 left-0 right-0 z-50 transition-colors duration-300 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white/80 dark:bg-[var(--background)]/80 backdrop-blur-xl border border-gray-200/50 dark:border-white/20 rounded-xl shadow-md ">
-          <div className="flex justify-between items-center h-16 pr-4">
-          {/* Logo */}
-          <div className="flex items-center">
-            <div className="flex-shrink-0 flex items-center h-full">
-              <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
-                <div className="relative h-fit w-fit flex items-center">
-
+          <div className="flex justify-between items-center h-16 pr-2">
+            {/* Logo */}
+              <Link href="/" className="hover:opacity-80 transition-opacity flex items-center h-16 w-fit">
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-light-transparent.svg"
                     alt="Pennysia logo light"
-                    width={80}
-                    height={50}
-                    className="block dark:hidden"
+                    width={64}
+                    height={64}
+                    className=" block dark:hidden h-20 w-auto object-cover"
                     priority
                     quality={100}
                   />
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-dark-transparent.svg"
                     alt="Pennysia logo dark"
-                    width={80}
-                    height={50}
-                    className="hidden dark:block"
+                    width={64}
+                    height={64}
+                    className="hidden dark:block h-20 w-auto object-cover"
                     priority
                     quality={100}
                   />
-                </div>
               </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:block mx-8">
+              <Navigation />
             </div>
-          </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:block mx-8">
-            <Navigation />
-          </div>
+            {/* Actions */}
+            <div className="flex items-center space-x-3">
+              {/* Theme Toggle */}
+              <ThemeToggle />
 
-          {/* Actions */}
-          <div className="flex items-center space-x-3">
-            {/* Theme Toggle */}
-            <ThemeToggle />
-            
-            {/* Privy Wallet Button */}
-            <PrivyWalletButton />
+              {/* Privy Wallet Button */}
+              <PrivyWalletButton />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
   )
 }

@@ -16,7 +16,7 @@ export default function Header() {
             {/* Logo */}
               <Link href="/" className="cursor-pointer transition-opacity flex items-center">
                   <Image
-                    src="/pennysia-brandkit/svg/icon/main-light-transparent.svg"
+                    src="/pennysia-brandkit/svg/icon/main-light-transparent-min.svg"
                     alt="Pennysia logo light"
                     width={500}
                     height={500}
@@ -26,7 +26,7 @@ export default function Header() {
                     quality={100}
                   />
                   <Image
-                    src="/pennysia-brandkit/svg/icon/main-dark-transparent.svg"
+                    src="/pennysia-brandkit/svg/icon/main-dark-transparent-min.svg"
                     alt="Pennysia logo dark"
                     width={500}
                     height={500}

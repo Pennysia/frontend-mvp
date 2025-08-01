@@ -74,7 +74,7 @@ export default function Home() {
               <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
                 <div className="w-full h-auto mx-auto my-2 flex items-center justify-center transform-gpu">
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/h1.svg"
+                    src="/pennysia-brandkit/svg/full-logo/h1-min.svg"
                     alt="Pennysia Logo"
                     width={381}
                     height={315}
@@ -104,7 +104,7 @@ export default function Home() {
               <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
                 <div className="w-full h-auto mx-auto my-2 flex items-center justify-center transform-gpu">
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/h2.svg"
+                    src="/pennysia-brandkit/svg/full-logo/h2-min.svg"
                     alt="Pennysia Logo"
                     width={280}
                     height={280}
@@ -134,7 +134,7 @@ export default function Home() {
               <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
                 <div className="w-full h-auto mx-auto my-2 flex items-center justify-center transform-gpu">
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/h3.svg"
+                    src="/pennysia-brandkit/svg/full-logo/h3-min.svg"
                     alt="Pennysia Logo"
                     width={280}
                     height={280}

@@ -27,7 +27,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="p-2 rounded-lg bg-gray-200/10 hover:bg-gray-200/20 dark:bg-gray-800/50 dark:hover:bg-gray-800/70 border border-gray-300/20 dark:border-gray-700/50 transition-all duration-200"
+      className="cursor-pointer p-2 rounded-lg bg-gray-200/10 hover:bg-gray-200 dark:bg-[#19192A]/50 dark:hover:bg-[#555C6F]/50 border border-gray-300/20 dark:border-gray-700/50 transition-all duration-200"
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
     >
       {theme === 'light' ? (

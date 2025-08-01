@@ -112,9 +112,9 @@ export default function PrivyWalletButton() {
   return (
     <button
       onClick={login}
-      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-medium"
+      className="cursor-pointer flex items-center space-x-2 px-4 py-2 bg-[#19192A] hover:bg-[#555C6F] dark:bg-[#19192A] dark:hover:bg-[#555C6F] text-white rounded-lg transition-all duration-200 font-medium"
     >
-      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+      <svg className="h-6 w-6 hidden sm:block" viewBox="0 0 24 24" fill="none">
         {/* Main wallet body */}
         <rect x="2" y="6" width="20" height="12" rx="3" ry="3" fill="white"/>
         {/* Card slot opening */}
@@ -126,7 +126,7 @@ export default function PrivyWalletButton() {
         {/* Wallet fold line */}
         <path d="M2 9 L22 9" stroke="black" strokeWidth="1" opacity="1"/>
       </svg>
-      <span>Connect Wallet</span>
+      <span>Connect</span>
     </button>
   );
 }

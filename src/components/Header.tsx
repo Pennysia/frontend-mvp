@@ -20,7 +20,7 @@ export default function Header() {
                 <div className="relative h-full flex items-center px-2">
 
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/full-logo-light.svg"
+                    src="/pennysia-brandkit/svg/full-logo/full-light-transparent.svg"
                     alt="Pennysia logo light"
                     width={120}
                     height={42}
@@ -30,7 +30,7 @@ export default function Header() {
                     unoptimized
                   />
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/full-logo-dark.svg"
+                    src="/pennysia-brandkit/svg/full-logo/full-dark-transparent.svg"
                     alt="Pennysia logo dark"
                     width={120}
                     height={42}

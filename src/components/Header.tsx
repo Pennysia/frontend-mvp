@@ -14,25 +14,24 @@ export default function Header() {
         <div className="bg-white/80 dark:bg-[var(--background)]/80 backdrop-blur-xl border border-gray-200/50 dark:border-white/20 rounded-xl shadow-md ">
           <div className="flex justify-between items-center h-16 pr-2">
             {/* Logo */}
-              <Link href="/" className="hover:opacity-80 transition-opacity flex items-center h-16 w-fit">
+              <Link href="/" className="cursor-pointer transition-opacity flex items-center">
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-light-transparent.svg"
                     alt="Pennysia logo light"
                     width={500}
                     height={500}
                     className="block dark:hidden"
-                    style={{ objectFit: "cover", width: "64px", height: "64px" }}
+                    style={{ objectFit: "cover", width: "80px", height: "100%" }}
                     priority={true}
                     quality={100}
                   />
-                  <img src="/pennysia-brandkit/svg/icon/main-light-transparent.svg" alt="Pennysia logo light" className="block dark:hidden max-w-20" />
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-dark-transparent.svg"
                     alt="Pennysia logo dark"
                     width={500}
                     height={500}
                     className="hidden dark:block"
-                    style={{ objectFit: "cover", width: "64px", height: "64px" }}
+                    style={{ objectFit: "cover", width: "80px", height: "100%" }}
                     priority={true}
                     quality={100}
                   />

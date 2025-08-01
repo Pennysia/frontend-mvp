@@ -5,6 +5,8 @@ import Image from 'next/image'
 import Navigation from './Navigation'
 import ThemeToggle from './ThemeToggle'
 import PrivyWalletButton from './PrivyWalletButton'
+import LogoLight from '/pennysia-brandkit/svg/full-logo/full-light-transparent.svg'
+import LogoDark from '/pennysia-brandkit/svg/full-logo/full-dark-transparent.svg'
 
 export default function Header() {
   return (
@@ -19,20 +21,16 @@ export default function Header() {
                 <div className="relative h-full flex items-center">
 
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/full-light-transparent.svg"
-                    alt="Pennysia"
-                    width={160}
-                    height={42}
+                    src={LogoLight}
+                    alt="Pennysia logo light"
                     className="block dark:hidden"
                     priority
                     quality={100}
                     unoptimized
                   />
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/full-dark-transparent.svg"
-                    alt="Pennysia"
-                    width={160}
-                    height={42}
+                    src={LogoDark}
+                    alt="Pennysia logo dark"
                     className="hidden dark:block"
                     priority
                     quality={100}

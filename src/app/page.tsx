@@ -46,9 +46,7 @@ export default function Home() {
             </h1>
 
             <p className="text-base md:text-lg text-[#2E2F46] dark:text-gray-300 mb-8 max-w-3xl mx-auto transition-colors duration-300">
-              Experience the future of DeFi with directional liquidity
-              positions. Take precise long or short positions while earning fees
-              from trading activity.
+              The first DEX where you can profit from both sides of every trade. Provide liquidity in long/short and start earning. Your liquidity, your conviction, your rewards.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

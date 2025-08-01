@@ -25,6 +25,7 @@ export default function Header() {
                     priority={true}
                     quality={100}
                   />
+                  <img src="/pennysia-brandkit/svg/icon/main-light-transparent.svg" alt="Pennysia logo light" className="block dark:hidden max-w-20" />
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-dark-transparent.svg"
                     alt="Pennysia logo dark"

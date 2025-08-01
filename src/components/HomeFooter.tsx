@@ -14,7 +14,7 @@ export default function HomeFooter() {
                         <div className="col-span-1 md:col-span-1">
                             <Link href="/" className="cursor-pointer transition-opacity flex items-center">
                                 <Image
-                                    src="/pennysia-brandkit/svg/full-logo/full-solid-light-transparent-min.svg"
+                                    src="/pennysia-brandkit/svg/full-logo/full-logo-light-min.svg"
                                     alt="Pennysia logo light"
                                     width={500}
                                     height={500}
@@ -24,7 +24,7 @@ export default function HomeFooter() {
                                     quality={100}
                                 />
                                 <Image
-                                    src="/pennysia-brandkit/svg/full-logo/full-dark-transparent-min.svg"
+                                    src="/pennysia-brandkit/svg/full-logo/full-logo-dark-min.svg"
                                     alt="Pennysia logo dark"
                                     width={500}
                                     height={500}

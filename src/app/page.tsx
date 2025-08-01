@@ -26,7 +26,7 @@ export default function Home() {
               backgroundSize: "contain",
               backgroundPosition: "top center",
               backgroundRepeat: "no-repeat",
-              imageRendering: "crisp-edges",
+              imageRendering: "-webkit-optimize-contrast"
             }}
           />
 
@@ -81,6 +81,9 @@ export default function Home() {
                   objectFit="cover"
                   priority={true}
                   quality={100}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzgxIiBoZWlnaHQ9IjMxNSIgdmlld0JveD0iMCAwIDM4MSAzMTUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzODEiIGhlaWdodD0iMzE1IiBmaWxsPSIjRjJGMkYyIi8+Cjwvc3ZnPgo="
                 />
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
@@ -107,6 +110,7 @@ export default function Home() {
                   objectFit="cover"
                   priority={true}
                   quality={100}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
@@ -133,6 +137,7 @@ export default function Home() {
                   objectFit="cover"
                   priority={true}
                   quality={100}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">

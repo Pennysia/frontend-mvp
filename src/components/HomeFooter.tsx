@@ -60,7 +60,7 @@ export default function HomeFooter() {
                                     </svg>
                                 </a>
                                 <a
-                                    href="https://t.me/pennysia"
+                                    href="https://t.me/Pennysia_protocol"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"

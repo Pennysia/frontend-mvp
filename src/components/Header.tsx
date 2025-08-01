@@ -32,6 +32,7 @@ export default function Header() {
                     className="block dark:hidden"
                     priority
                     quality={100}
+                    unoptimized
                   />
                   <Image
                     src="/pennysia-brandkit/svg/full-logo/full-dark-transparent.svg"
@@ -41,6 +42,7 @@ export default function Header() {
                     className="hidden dark:block"
                     priority
                     quality={100}
+                    unoptimized
                   />
                 </div>
               </Link>

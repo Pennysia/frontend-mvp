@@ -1,30 +1,50 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { CodeBracketIcon } from "@heroicons/react/24/outline";
 
 export default function HomeFooter() {
     return (
         <footer className="max-w-7xl mx-auto rounded-t-4xl bg-gray-100 dark:bg-white/2">
             <div className="px-8 sm:px-12">
-                <div className="py-12">
+                <div className="py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8">
                         {/* Brand Section */}
                         <div className="col-span-1 md:col-span-1">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                Pennysia
-                            </h3>
+                            <Link href="/" className="cursor-pointer transition-opacity flex items-center">
+                                <Image
+                                    src="/pennysia-brandkit/svg/full-logo/full-light-transparent-min.svg"
+                                    alt="Pennysia logo light"
+                                    width={500}
+                                    height={500}
+                                    className="block dark:hidden"
+                                    style={{ objectFit: "cover", width: "172px", height: "100%" }}
+                                    priority={true}
+                                    quality={100}
+                                />
+                                <Image
+                                    src="/pennysia-brandkit/svg/full-logo/full-dark-transparent-min.svg"
+                                    alt="Pennysia logo dark"
+                                    width={500}
+                                    height={500}
+                                    className="hidden dark:block"
+                                    style={{ objectFit: "cover", width: "172px", height: "100%" }}
+                                    priority={true}
+                                    quality={100}
+                                />
+                            </Link>
                             {/* <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
                                 The next-generation AMM protocol for efficient trading and
                                 liquidity provision.
                             </p> */}
                             <p className="text-gray-400 dark:text-gray-600 text-[10px] mb-6">
-                                Pennysia Labs hereby provides information and resources regarding the fundamental principles and functionalities of its decentralized, non-custodial liquidity protocol, referred to herein as the &quot;Pennysia Protocol.&quot; 
-                                The Pennysia Protocol is composed of open-source, self-executing smart contracts, 
-                                which are deployed on multiple permissionless public blockchains, including, 
-                                but not limited to, Ethereum (collectively, the &quot;Protocol&quot;). 
-                                The Interface is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind. Pennysia Labs does not control, operate, or maintain any instance or version of the Pennysia Protocol 
-                                on any blockchain network, and shall not be held liable for any actions or inactions related to 
+                                Pennysia Labs hereby provides information and resources regarding the fundamental principles and functionalities of its decentralized, non-custodial liquidity protocol, referred to herein as the &quot;Pennysia Protocol.&quot;
+                                The Pennysia Protocol is composed of open-source, self-executing smart contracts,
+                                which are deployed on multiple permissionless public blockchains, including,
+                                but not limited to, Ethereum (collectively, the &quot;Protocol&quot;).
+                                The Interface is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind. Pennysia Labs does not control, operate, or maintain any instance or version of the Pennysia Protocol
+                                on any blockchain network, and shall not be held liable for any actions or inactions related to
                                 the operation or deployment of the Protocol on any blockchain network.
                             </p>
                             <div className="flex space-x-4">
@@ -76,101 +96,101 @@ export default function HomeFooter() {
                             </div>
                         </div>
 
-                        <div className="col-span-1 md:col-span-1 flex flex-col sm:flex-row justify-around gap-12">
-                        {/* Product Links */}
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                                App
-                            </h4>
-                            <ul className="space-y-2">
-                                <li>
-                                    <Link
-                                        href="/swap"
-                                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        aria-label="Swap"
-                                    >
-                                        Swap
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href="/liquidity"
-                                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        aria-label="Liquidity"
-                                    >
-                                        Liquidity
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
+                        <div className="col-span-1 md:col-span-1 flex flex-col sm:flex-row justify-around gap-12 pt-4">
+                            {/* Product Links */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                                    App
+                                </h4>
+                                <ul className="space-y-2">
+                                    <li>
+                                        <Link
+                                            href="/swap"
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                            aria-label="Swap"
+                                        >
+                                            Swap
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/liquidity"
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                            aria-label="Liquidity"
+                                        >
+                                            Liquidity
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </div>
 
-                        {/* Resources */}
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                                Resources
-                            </h4>
-                            <ul className="space-y-2">
-                                <li>
-                                    <a
-                                        href="/docs"
-                                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        aria-label="Documentation"
-                                    >
-                                        Documentation
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="/brand-kit"
-                                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        aria-label="Brand kit"
-                                    >
-                                        Brand kit
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="https://github.com/Pennysia"
-                                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="Github"
-                                    >
-                                        Github
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                            {/* Resources */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                                    Resources
+                                </h4>
+                                <ul className="space-y-2">
+                                    <li>
+                                        <a
+                                            href="/docs"
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                            aria-label="Documentation"
+                                        >
+                                            Documentation
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="/brand-kit"
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                            aria-label="Brand kit"
+                                        >
+                                            Brand kit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="https://github.com/Pennysia"
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label="Github"
+                                        >
+                                            Github
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
 
-                        {/* Support */}
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                                Support
-                            </h4>
-                            <ul className="space-y-2">
-                                <li>
-                                    <a
-                                        href="mailto:hello@pennysia.com"
-                                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        aria-label="Contact Us"
-                                    >
-                                        Contact Us
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="https://docs.google.com/forms/d/e/1FAIpQLScnudg5yaAFL1ZOz28co1CJ202a3k2ntr3LhLa-rCohBQIorg/viewform?usp=sharing&ouid=114606323687541650973"
-                                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="Request Form"
-                                    >
-                                        Request Form
-                                    </a>
-                                </li>
-                            </ul>
+                            {/* Support */}
+                            <div>
+                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                                    Support
+                                </h4>
+                                <ul className="space-y-2">
+                                    <li>
+                                        <a
+                                            href="mailto:hello@pennysia.com"
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                            aria-label="Contact Us"
+                                        >
+                                            Contact Us
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="https://docs.google.com/forms/d/e/1FAIpQLScnudg5yaAFL1ZOz28co1CJ202a3k2ntr3LhLa-rCohBQIorg/viewform?usp=sharing&ouid=114606323687541650973"
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label="Request Form"
+                                        >
+                                            Request Form
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                    </div>
                     </div>
 
                     {/* Bottom Section */}

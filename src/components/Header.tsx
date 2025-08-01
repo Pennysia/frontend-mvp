@@ -17,27 +17,25 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center h-full">
               <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
-                <div className="relative h-full flex items-center px-2">
+                <div className="relative h-fit w-fit flex items-center">
 
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/full-light-transparent.svg"
+                    src="/pennysia-brandkit/svg/icon/main-light-transparent.svg"
                     alt="Pennysia logo light"
-                    width={120}
-                    height={42}
+                    width={80}
+                    height={50}
                     className="block dark:hidden"
                     priority
                     quality={100}
-                    unoptimized
                   />
                   <Image
-                    src="/pennysia-brandkit/svg/full-logo/full-dark-transparent.svg"
+                    src="/pennysia-brandkit/svg/icon/main-dark-transparent.svg"
                     alt="Pennysia logo dark"
-                    width={120}
-                    height={42}
+                    width={80}
+                    height={50}
                     className="hidden dark:block"
                     priority
                     quality={100}
-                    unoptimized
                   />
                 </div>
               </Link>

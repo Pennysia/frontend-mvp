@@ -80,6 +80,7 @@ export default function Home() {
                   className="object-contain"
                   priority
                   quality={100}
+                  unoptimized
                 />
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">

@@ -14,7 +14,7 @@ export default function HomeFooter() {
                         <div className="col-span-1 md:col-span-1">
                             <Link href="/" className="cursor-pointer transition-opacity flex items-center">
                                 <Image
-                                    src="/pennysia-brandkit/svg/full-logo/full-light-transparent-min.svg"
+                                    src="/pennysia-brandkit/svg/full-logo/full-solid-light-transparent-min.svg"
                                     alt="Pennysia logo light"
                                     width={500}
                                     height={500}

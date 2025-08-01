@@ -46,7 +46,7 @@ export default function Home() {
             </h1>
 
             <p className="text-base md:text-lg text-[#2E2F46] dark:text-gray-300 mb-8 max-w-3xl mx-auto transition-colors duration-300">
-              The first DEX where you can profit from both sides of every trade. Provide liquidity in long/short and start earning. Your liquidity, your conviction, your rewards.
+              The first AMM where you can profit from both sides of every trade. Provide liquidity in long/short and start earning. Your liquidity, your conviction, your rewards.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -77,8 +77,9 @@ export default function Home() {
                   alt="Pennysia Logo"
                   width={381}
                   height={315}
-                  className="object-cover w-full h-auto"
-                  priority
+                  className="w-full h-auto"
+                  objectFit="cover"
+                  priority={true}
                   quality={100}
                 />
               </div>
@@ -102,8 +103,10 @@ export default function Home() {
                   alt="Pennysia Logo"
                   width={280}
                   height={280}
-                  className="object-cover w-full h-auto"
-                  priority
+                  className="w-full h-auto"
+                  objectFit="cover"
+                  priority={true}
+                  quality={100}
                 />
               </div>
               <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
@@ -126,8 +129,9 @@ export default function Home() {
                   alt="Pennysia Logo"
                   width={280}
                   height={280}
-                  className="object-cover w-full h-auto"
-                  priority
+                  className="w-full h-auto"
+                  objectFit="cover"
+                  priority={true}
                   quality={100}
                 />
               </div>

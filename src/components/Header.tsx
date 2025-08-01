@@ -20,8 +20,9 @@ export default function Header() {
                     alt="Pennysia logo light"
                     width={64}
                     height={64}
-                    className=" block dark:hidden h-20 w-auto object-cover"
-                    priority
+                    className=" block dark:hidden h-20 w-auto "
+                    objectFit='cover'
+                    priority={true}
                     quality={100}
                   />
                   <Image
@@ -29,8 +30,9 @@ export default function Header() {
                     alt="Pennysia logo dark"
                     width={64}
                     height={64}
-                    className="hidden dark:block h-20 w-auto object-cover"
-                    priority
+                    className="hidden dark:block h-20 w-auto "
+                    objectFit='cover'
+                    priority={true}
                     quality={100}
                   />
               </Link>

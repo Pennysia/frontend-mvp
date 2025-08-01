@@ -5,8 +5,7 @@ import Image from 'next/image'
 import Navigation from './Navigation'
 import ThemeToggle from './ThemeToggle'
 import PrivyWalletButton from './PrivyWalletButton'
-import LogoLight from '/pennysia-brandkit/svg/full-logo/full-light-transparent.svg'
-import LogoDark from '/pennysia-brandkit/svg/full-logo/full-dark-transparent.svg'
+// Logo paths are handled as static assets
 
 export default function Header() {
   return (
@@ -18,19 +17,23 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center h-full">
               <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
-                <div className="relative h-full flex items-center">
+                <div className="relative h-full flex items-center px-2">
 
                   <Image
-                    src={LogoLight}
+                    src="/pennysia-brandkit/svg/full-logo/full-logo-light.svg"
                     alt="Pennysia logo light"
+                    width={120}
+                    height={42}
                     className="block dark:hidden"
                     priority
                     quality={100}
                     unoptimized
                   />
                   <Image
-                    src={LogoDark}
+                    src="/pennysia-brandkit/svg/full-logo/full-logo-dark.svg"
                     alt="Pennysia logo dark"
+                    width={120}
+                    height={42}
                     className="hidden dark:block"
                     priority
                     quality={100}

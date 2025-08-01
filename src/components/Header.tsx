@@ -21,7 +21,7 @@ export default function Header() {
                     width={64}
                     height={64}
                     className="block dark:hidden h-20 w-auto"
-                    style={{ objectFit: "cover", width: "100%", height: "64px" }}
+                    style={{ objectFit: "cover", width: "100%", height: "100%" }}
                     priority={true}
                     quality={100}
                     unoptimized={true}

@@ -20,7 +20,7 @@ export default function Header() {
                     alt="Pennysia logo light"
                     width={32}
                     height={32}
-                    className="block dark:hidden h-20 w-auto"
+                    className="block dark:hidden h-16 w-auto"
                     style={{ objectFit: "cover", width: "100%", height: "100%" }}
                     priority={true}
                     quality={100}
@@ -31,7 +31,7 @@ export default function Header() {
                     alt="Pennysia logo dark"
                     width={32}
                     height={32}
-                    className="hidden dark:block h-20 w-auto"
+                    className="hidden dark:block h-16 w-auto"
                     style={{ objectFit: "cover", width: "100%", height: "100%" }}
                     priority={true}
                     quality={100}

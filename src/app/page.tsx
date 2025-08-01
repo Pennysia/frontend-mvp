@@ -19,12 +19,13 @@ export default function Home() {
         <div className="relative text-center items-center flex flex-col overflow-hidden rounded-3xl">
           {/* Background SVG */}
           <div
-            className="absolute inset-0 w-full h-full bg-contain bg-center bg-no-repeat opacity-75 dark:opacity-5"
+            className="absolute inset-0 w-full h-full bg-cover bg-top bg-no-repeat opacity-100 dark:opacity-5"
             style={{
               backgroundImage: "url('/LandingHeroBg.svg')",
               backgroundSize: 'contain',
-              backgroundPosition: 'top',
+              backgroundPosition: 'top center',
               backgroundRepeat: 'no-repeat',
+              imageRendering: 'crisp-edges'
             }}
           />
 
@@ -101,75 +102,6 @@ export default function Home() {
         </div>
 
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Recent Activity */}
-          <div className="bg-white/70 dark:bg-[var(--background)]/50 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition-colors duration-300">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 transition-colors duration-300">Recent Activity</h3>
-            <div className="space-y-4">
-              {[
-                { type: 'Long', pair: 'ETH/USDC', amount: '1.5 ETH', value: '$4,875', time: '2m ago', profit: true, pnl: '+$234' },
-                { type: 'Short', pair: 'BTC/USDC', amount: '0.1 BTC', value: '$6,789', time: '5m ago', profit: false, pnl: '-$156' },
-                { type: 'Long', pair: 'SOL/USDC', amount: '50 SOL', value: '$4,925', time: '8m ago', profit: true, pnl: '+$892' },
-                { type: 'Liquidity', pair: 'ETH/USDC', amount: '2.0 ETH', value: '$6,500', time: '12m ago', profit: null, pnl: null },
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-gray-100/50 dark:bg-gray-800/30 rounded-lg transition-colors duration-300">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg ${activity.type === 'Long' ? 'bg-green-500/20' :
-                        activity.type === 'Short' ? 'bg-red-500/20' :
-                          'bg-blue-500/20'
-                      }`}>
-                      {activity.type === 'Long' ? (
-                        <ArrowTrendingUpIcon className="h-4 w-4 text-green-500 dark:text-green-400" />
-                      ) : activity.type === 'Short' ? (
-                        <ArrowTrendingDownIcon className="h-4 w-4 text-red-500 dark:text-red-400" />
-                      ) : (
-                        <BeakerIcon className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="text-gray-900 dark:text-white font-medium transition-colors duration-300">{activity.pair}</div>
-                      <div className="text-gray-600 dark:text-gray-400 text-sm transition-colors duration-300">{activity.amount} | {activity.time}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-gray-900 dark:text-white font-medium transition-colors duration-300">{activity.value}</div>
-                    {activity.profit !== null && activity.pnl && (
-                      <div className={`text-sm ${activity.profit ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
-                        } transition-colors duration-300`}>
-                        {activity.pnl}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Top Pools */}
-          <div className="bg-white/70 dark:bg-[var(--background)]/50 backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition-colors duration-300">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 transition-colors duration-300">Top Liquidity Pools</h3>
-            <div className="space-y-4">
-              {[
-                { pair: 'ETH/USDC', tvl: '$1.2M', volume: '$245K', apr: '12.5%', change: '+5.2%' },
-                { pair: 'BTC/USDC', tvl: '$890K', volume: '$189K', apr: '8.7%', change: '+2.1%' },
-                { pair: 'SOL/USDC', tvl: '$456K', volume: '$98K', apr: '15.2%', change: '+8.9%' },
-                { pair: 'AVAX/USDC', tvl: '$234K', volume: '$45K', apr: '18.3%', change: '+12.4%' },
-              ].map((pool, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-gray-100/50 dark:bg-gray-800/30 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer">
-                  <div>
-                    <div className="text-gray-900 dark:text-white font-medium transition-colors duration-300">{pool.pair}</div>
-                    <div className="text-gray-600 dark:text-gray-400 text-sm transition-colors duration-300">TVL: {pool.tvl} | Vol: {pool.volume}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-green-500 dark:text-green-400 font-medium transition-colors duration-300">{pool.apr} APR</div>
-                    <div className="text-green-500 dark:text-green-400 text-sm transition-colors duration-300">{pool.change}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
 
 
       </main>

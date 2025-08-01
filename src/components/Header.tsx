@@ -27,18 +27,20 @@ export default function Header() {
                   <Image
                     src="/pennysia-brandkit/svg/full-logo/full-light-transparent.svg"
                     alt="Pennysia"
-                    width={120}
-                    height={32}
+                    width={160}
+                    height={42}
                     className="block dark:hidden"
                     priority
+                    quality={100}
                   />
                   <Image
                     src="/pennysia-brandkit/svg/full-logo/full-dark-transparent.svg"
                     alt="Pennysia"
-                    width={120}
-                    height={32}
+                    width={160}
+                    height={42}
                     className="hidden dark:block"
                     priority
+                    quality={100}
                   />
                 </div>
               </Link>

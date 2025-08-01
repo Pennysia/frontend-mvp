@@ -18,24 +18,22 @@ export default function Header() {
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-light-transparent.svg"
                     alt="Pennysia logo light"
-                    width={64}
-                    height={64}
+                    width={500}
+                    height={500}
                     className="block dark:hidden"
                     style={{ objectFit: "cover", width: "64px", height: "64px" }}
                     priority={true}
                     quality={100}
-                    unoptimized={true}
                   />
                   <Image
                     src="/pennysia-brandkit/svg/icon/main-dark-transparent.svg"
                     alt="Pennysia logo dark"
-                    width={64}
-                    height={64}
+                    width={500}
+                    height={500}
                     className="hidden dark:block"
                     style={{ objectFit: "cover", width: "64px", height: "64px" }}
                     priority={true}
                     quality={100}
-                    unoptimized={true}
                   />
               </Link>
 

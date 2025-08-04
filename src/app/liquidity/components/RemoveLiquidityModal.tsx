@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { XMarkIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { useLiquidity, LiquidityPosition } from '../hooks/useLiquidity'
 import { useLiquidityActions } from '../hooks/useLiquidityActions'
@@ -22,9 +22,157 @@ interface WithdrawalAmount {
   usePercentage: boolean
 }
 
+// TokenWithdrawalControl component - moved outside to fix Rules of Hooks
+const TokenWithdrawalControl = memo(({ 
+  tokenSymbol, 
+  positionType, 
+  maxAmount, 
+  onAmountChange, 
+  onPercentageChange, 
+  currentAmount, 
+  currentPercentage, 
+  usePercentage,
+  color 
+}: {
+  tokenSymbol: string
+  positionType: string
+  maxAmount: string
+  onAmountChange: (amount: string) => void
+  onPercentageChange: (percentage: number) => void
+  currentAmount: string
+  currentPercentage: number
+  usePercentage: boolean
+  color?: string
+}) => {
+  // Initialize with empty string to show placeholder, or use currentAmount if it has a value
+  const [localAmount, setLocalAmount] = useState(currentAmount || '')
+  const [isUserTyping, setIsUserTyping] = useState(false)
+  const maxAmountNum = parseFloat(maxAmount)
+
+  useEffect(() => {
+    // Only update localAmount if user is not actively typing
+    if (!isUserTyping && usePercentage) {
+      const calculatedAmount = (maxAmountNum * currentPercentage / 100)
+      // Don't show "0" - let placeholder show instead when amount is 0
+      const displayAmount = calculatedAmount === 0 ? '' : calculatedAmount.toString()
+      setLocalAmount(displayAmount)
+      onAmountChange(calculatedAmount.toString())
+    } else if (!isUserTyping && !usePercentage) {
+      // Don't show "0" - let placeholder show instead when amount is empty or "0"
+      const displayAmount = (!currentAmount || currentAmount === '0') ? '' : currentAmount
+      setLocalAmount(displayAmount)
+    }
+  }, [currentAmount, currentPercentage, usePercentage, maxAmountNum, isUserTyping, onAmountChange])
+
+  const handlePercentageChange = (percentage: number) => {
+    setIsUserTyping(false) // User clicked percentage, not typing
+    onPercentageChange(percentage)
+  }
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setIsUserTyping(true) // User is actively typing
+    setLocalAmount(value) // Update local state for smooth typing
+
+    // Only allow numbers and a single decimal point
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      const numValue = parseFloat(value)
+      if (value === '' || isNaN(numValue)) {
+        onAmountChange('')
+      } else {
+        const clampedValue = Math.min(numValue, maxAmountNum)
+        onAmountChange(clampedValue.toString())
+      }
+    }
+  }
+
+  const handleInputBlur = () => {
+    // User finished typing
+    setIsUserTyping(false)
+  }
+
+  const handleInputFocus = () => {
+    // User started typing
+    setIsUserTyping(true)
+  }
+
+  return (
+    <div className="rounded-2xl">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col items-start space-x-2">
+          <span className={`text-xs font-normal ${
+            positionType === 'Long' ? 'text-green-500' : 'text-red-500'
+          }`}>
+            {positionType}
+          </span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {tokenSymbol}
+          </span>
+        </div>
+        <div className="h-full flex flex-row gap-2 text-sm text-gray-400 dark:text-gray-600 items-center">
+          <p className="text-sm">{parseFloat(maxAmount).toFixed(12)} </p>
+          <button
+            type="button"
+            onClick={() => handlePercentageChange(100)}
+            className="h-full text-xs font-normal text-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
+          >
+            Max
+          </button>
+        </div>
+      </div>
+
+      {/* Amount Input */}
+      <div className="relative">
+        <input
+          type="text"
+          inputMode="decimal"
+          value={localAmount}
+          onChange={handleAmountChange}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          onKeyDown={(e) => {
+            // Prevent 'e', 'E', '+', '-' keys
+            if (['e', 'E', '+', '-'].includes(e.key)) {
+              e.preventDefault()
+            }
+          }}
+          placeholder="0.00"
+          className="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-lg px-3 py-2 text-right text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+          autoComplete="off"
+        />
+      </div>
+      <div className="flex justify-between mt-2 space-x-1 w-full">
+        {[25, 50, 75, 100].map((percent) => (
+          <button
+            key={percent}
+            onClick={() => handlePercentageChange(percent)}
+            className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
+          >
+            {percent}%
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+})
+
 export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddLiquidity, onTransactionComplete }: RemoveLiquidityModalProps) {
   const [isRemoving, setIsRemoving] = useState(false)
   const [withdrawalMode, setWithdrawalMode] = useState<'percentage' | 'amount'>('percentage')
+  const [showTransactionResult, setShowTransactionResult] = useState(false)
+  const [transactionResult, setTransactionResult] = useState<{
+    success: boolean
+    txHash?: string
+    error?: string
+    amount0?: string
+    amount1?: string
+    token0Symbol?: string
+    token1Symbol?: string
+    liquidity0Long?: string
+    liquidity0Short?: string
+    liquidity1Long?: string
+    liquidity1Short?: string
+  } | null>(null)
 
   // Individual withdrawal amounts for each LP token type - managed locally
   const [token0Long, setToken0Long] = useState<WithdrawalAmount>({ percentage: 0, amount: '', usePercentage: true })
@@ -33,10 +181,43 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
   const [token1Short, setToken1Short] = useState<WithdrawalAmount>({ percentage: 0, amount: '', usePercentage: true })
 
   const { performRemoveLiquidity } = useLiquidityActions()
-  const { isAuthenticated } = useLiquidity()
+  const { isAuthenticated, removeLiquidity } = useLiquidity()
 
   // Lock background scroll when modal is open
   useScrollLock(isOpen)
+
+  // Memoized event handlers to prevent unnecessary re-renders - MOVED BEFORE EARLY RETURN
+  const handleToken0LongAmountChange = useCallback((amount: string) => {
+    setToken0Long(prev => ({ ...prev, amount, usePercentage: false }))
+  }, [])
+
+  const handleToken0LongPercentageChange = useCallback((percentage: number) => {
+    setToken0Long(prev => ({ ...prev, percentage, usePercentage: true }))
+  }, [])
+
+  const handleToken0ShortAmountChange = useCallback((amount: string) => {
+    setToken0Short(prev => ({ ...prev, amount, usePercentage: false }))
+  }, [])
+
+  const handleToken0ShortPercentageChange = useCallback((percentage: number) => {
+    setToken0Short(prev => ({ ...prev, percentage, usePercentage: true }))
+  }, [])
+
+  const handleToken1LongAmountChange = useCallback((amount: string) => {
+    setToken1Long(prev => ({ ...prev, amount, usePercentage: false }))
+  }, [])
+
+  const handleToken1LongPercentageChange = useCallback((percentage: number) => {
+    setToken1Long(prev => ({ ...prev, percentage, usePercentage: true }))
+  }, [])
+
+  const handleToken1ShortAmountChange = useCallback((amount: string) => {
+    setToken1Short(prev => ({ ...prev, amount, usePercentage: false }))
+  }, [])
+
+  const handleToken1ShortPercentageChange = useCallback((percentage: number) => {
+    setToken1Short(prev => ({ ...prev, percentage, usePercentage: true }))
+  }, [])
 
   // Calculate withdrawal amount based on percentage or absolute amount
   const calculateWithdrawalAmount = (amount: string, percentage: number, usePercentage: boolean, maxAmount: string): string => {
@@ -72,26 +253,55 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
     setIsRemoving(true)
 
     try {
-      await performRemoveLiquidity(
-        {
-          token0Address: position.token0Address,
-          token1Address: position.token1Address,
-          liquidity0Long,
-          liquidity0Short,
-          liquidity1Long,
-          liquidity1Short
-        },
-        async () => {
-          // Close modal and refresh main page positions
-          onClose()
-          if (onTransactionComplete) {
-            await onTransactionComplete()
-          }
-        }
+      // Call removeLiquidity directly to get transaction results
+      const result = await removeLiquidity(
+        position.token0Address,
+        position.token1Address,
+        liquidity0Long,
+        liquidity0Short,
+        liquidity1Long,
+        liquidity1Short
       )
+
+      // Show success result with actual withdrawal amounts from contract return data
+      setTransactionResult({
+        success: true,
+        txHash: result.txHash,
+        token0Symbol: position.token0Symbol,
+        token1Symbol: position.token1Symbol,
+        liquidity0Long,
+        liquidity0Short,
+        liquidity1Long,
+        liquidity1Short,
+        // Use actual return values from the contract (amount0, amount1)
+        amount0: result.amount0,
+        amount1: result.amount1
+      })
+      setShowTransactionResult(true)
+      
+      // Refresh positions and close modal after showing success
+      setTimeout(async () => {
+        if (onTransactionComplete) {
+          await onTransactionComplete()
+        }
+        // Don't close modal immediately - let user see the success widget
+      }, 1000)
+      
     } catch (error) {
       console.error('Error removing liquidity:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to remove liquidity')
+      
+      // Show error result
+      setTransactionResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to remove liquidity',
+        token0Symbol: position.token0Symbol,
+        token1Symbol: position.token1Symbol,
+        liquidity0Long,
+        liquidity0Short,
+        liquidity1Long,
+        liquidity1Short
+      })
+      setShowTransactionResult(true)
     } finally {
       setIsRemoving(false)
     }
@@ -119,118 +329,7 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
   // Early return after all hooks
   if (!isOpen || !position) return null
 
-  // Component for individual token withdrawal control
-  const TokenWithdrawalControl = ({
-    tokenSymbol,
-    positionType,
-    maxAmount,
-    onAmountChange,
-    onPercentageChange,
-    currentAmount,
-    currentPercentage,
-    usePercentage,
-    color
-  }: {
-    tokenSymbol: string
-    positionType: 'Long' | 'Short'
-    maxAmount: string
-    onAmountChange: (amount: string) => void
-    onPercentageChange: (percentage: number) => void
-    currentAmount: string
-    currentPercentage: number
-    usePercentage: boolean
-    color: string
-  }) => {
-    const [localAmount, setLocalAmount] = useState(currentAmount);
-    const maxAmountNum = parseFloat(maxAmount);
 
-    useEffect(() => {
-        if (usePercentage) {
-            const calculatedAmount = (maxAmountNum * currentPercentage / 100).toString();
-            setLocalAmount(calculatedAmount);
-            onAmountChange(calculatedAmount);
-        } else {
-            setLocalAmount(currentAmount);
-        }
-    }, [currentAmount, currentPercentage, usePercentage, maxAmountNum, onAmountChange]);
-
-    const handlePercentageChange = (percentage: number) => {
-      onPercentageChange(percentage);
-    }
-
-    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setLocalAmount(value); // Update local state for smooth typing
-
-      // Only allow numbers and a single decimal point
-      if (value === '' || /^\d*\.?\d*$/.test(value)) {
-        const numValue = parseFloat(value);
-        if (value === '' || isNaN(numValue)) {
-            onAmountChange('');
-        } else {
-            const clampedValue = Math.min(numValue, maxAmountNum);
-            onAmountChange(clampedValue.toString());
-        }
-      }
-    }
-
-    return (
-      <div className="rounded-2xl">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex flex-col items-start space-x-2 ">
-            <span className={`text-xs font-normal ${
-              positionType === 'Long' ? 'text-green-500' : 'text-red-500'
-            }`}>
-              {positionType}
-            </span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {tokenSymbol}
-            </span>
-          </div>
-          <div className="h-full flex flex-row gap-2 text-sm text-gray-400 dark:text-gray-600 items-center">
-            <p className="text-sm">{parseFloat(maxAmount).toFixed(12)} </p>
-            <button
-              type="button"
-              onClick={() => handlePercentageChange(100)}
-              className="h-full text-xs font-normal text-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Max
-            </button>
-          </div>
-        </div>
-
-        {/* Amount Input */}
-        <div className="relative">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={localAmount}
-            onChange={handleAmountChange}
-            onKeyDown={(e) => {
-              // Prevent 'e', 'E', '+', '-' keys
-              if (['e', 'E', '+', '-'].includes(e.key)) {
-                e.preventDefault();
-              }
-            }}
-            placeholder="0.00"
-            className="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-lg px-3 py-2 text-right text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-            autoComplete="off"
-          />
-        </div>
-        <div className="flex justify-between mt-2 space-x-1 w-full">
-            {[25, 50, 75, 100].map((percent) => (
-              <button
-                key={percent}
-                onClick={() => handlePercentageChange(percent)}
-                className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
-              >
-                {percent}%
-              </button>
-            ))}
-          </div>
-      </div>
-    )
-  }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 md:pb-0">
@@ -371,6 +470,149 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
           </div>
         </div>
       </div>
+      
+      {/* Transaction Result Modal */}
+      {showTransactionResult && transactionResult && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {transactionResult.success ? 'Withdrawal Successful!' : 'Withdrawal Failed'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowTransactionResult(false)
+                  if (transactionResult.success) {
+                    onClose() // Close the main modal on success
+                  }
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="space-y-4">
+              {transactionResult.success ? (
+                <>
+                  {/* Success Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Transaction Details */}
+                  <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+                    <div className="text-center mb-3">
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Liquidity Withdrawn</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {transactionResult.token0Symbol}/{transactionResult.token1Symbol} Pool
+                      </p>
+                    </div>
+                    
+                    {/* Withdrawn Amounts */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{transactionResult.token0Symbol} Withdrawn</div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {parseFloat(transactionResult.amount0 || '0').toFixed(6)}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{transactionResult.token1Symbol} Withdrawn</div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {parseFloat(transactionResult.amount1 || '0').toFixed(6)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* LP Token Details */}
+                    <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">LP Tokens Burned:</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-green-600 dark:text-green-400">Long {transactionResult.token0Symbol}:</span>
+                          <span className="font-mono">{parseFloat(transactionResult.liquidity0Long || '0').toFixed(6)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-green-600 dark:text-green-400">Long {transactionResult.token1Symbol}:</span>
+                          <span className="font-mono">{parseFloat(transactionResult.liquidity1Long || '0').toFixed(6)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-red-600 dark:text-red-400">Short {transactionResult.token0Symbol}:</span>
+                          <span className="font-mono">{parseFloat(transactionResult.liquidity0Short || '0').toFixed(6)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-red-600 dark:text-red-400">Short {transactionResult.token1Symbol}:</span>
+                          <span className="font-mono">{parseFloat(transactionResult.liquidity1Short || '0').toFixed(6)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {transactionResult.txHash && (
+                      <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400 text-sm">Transaction:</span>
+                          <a 
+                            href={`https://testnet.sonicscan.org/tx/${transactionResult.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-400 font-mono text-sm"
+                          >
+                            {transactionResult.txHash.slice(0, 6)}...{transactionResult.txHash.slice(-4)}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Error Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Error Details */}
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                    <div className="text-center mb-3">
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Transaction Failed</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {transactionResult.token0Symbol}/{transactionResult.token1Symbol} Pool
+                      </p>
+                    </div>
+                    <div className="text-sm text-red-600 dark:text-red-400 text-center">
+                      {transactionResult.error}
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  setShowTransactionResult(false)
+                  if (transactionResult.success) {
+                    onClose() // Close the main modal on success
+                  }
+                }}
+                className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+              >
+                {transactionResult.success ? 'Done' : 'Try Again'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

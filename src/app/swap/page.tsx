@@ -10,7 +10,7 @@ import {
 
 export default function SwapPage() {
   return (
-    <div className="pt-20 md:pt-24 h-[100vh] bg-gray-50 dark:bg-[var(--background)] overflow-y-auto">
+    <div className="pt-20 md:pt-24 min-h-screen bg-gray-50 dark:bg-[var(--background)] pb-20">
       
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

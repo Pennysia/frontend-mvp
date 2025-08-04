@@ -570,6 +570,28 @@ export function useLiquidity() {
         deadline
       })
 
+      // First, simulate the call to get the return values (amount0, amount1)
+      console.log('🔍 Simulating removeLiquidity call to get return values...')
+      const [simulatedAmount0, simulatedAmount1] = await routerContract.removeLiquidity.staticCall(
+        token0Address,
+        token1Address,
+        ethers.parseUnits(liquidity0Long, 18), // longX - LP tokens to remove
+        ethers.parseUnits(liquidity0Short, 18), // shortX
+        ethers.parseUnits(liquidity1Long, 18), // longY
+        ethers.parseUnits(liquidity1Short, 18), // shortY
+        0n, // amount0Minimum - minimum token0 to receive
+        0n, // amount1Minimum - minimum token1 to receive
+        address, // to - recipient
+        deadline
+      )
+      
+      console.log('📊 Simulated return values:', {
+        amount0: ethers.formatUnits(simulatedAmount0, 18),
+        amount1: ethers.formatUnits(simulatedAmount1, 18)
+      })
+
+      // Now execute the actual transaction
+      console.log('🚀 Executing actual removeLiquidity transaction...')
       const tx = await routerContract.removeLiquidity(
         token0Address,
         token1Address,
@@ -583,12 +605,17 @@ export function useLiquidity() {
         deadline
       )
 
-      await tx.wait()
+      const receipt = await tx.wait()
       
       // Refresh positions after successful transaction
       await fetchPositions()
       
-      return tx.hash
+      // Return both transaction hash and the actual withdrawal amounts
+      return {
+        txHash: tx.hash,
+        amount0: ethers.formatUnits(simulatedAmount0, 18),
+        amount1: ethers.formatUnits(simulatedAmount1, 18)
+      }
     } catch (error) {
       console.error('Error removing liquidity:', error)
       throw error

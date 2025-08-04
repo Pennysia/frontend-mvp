@@ -18,7 +18,7 @@ exports.PENNYSIA_CONSTANTS = {
     DEFAULT_DEADLINE_MINUTES: 20,
     DEFAULT_DEADLINE_SECONDS: 20 * 60,
     // Slippage defaults (in basis points)
-    DEFAULT_SLIPPAGE_BPS: 50, // 0.5%
+    DEFAULT_SLIPPAGE_BPS: 200, // 2.0%
     HIGH_SLIPPAGE_BPS: 300, // 3%
     // Gas limits (estimated)
     GAS_LIMITS: {

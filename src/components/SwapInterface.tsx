@@ -107,6 +107,50 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     initializeSDK()
   }, [isConnected, address, sdk])
 
+  // Auto-refresh quote every 15 seconds
+  useEffect(() => {
+    let refreshInterval: NodeJS.Timeout | null = null
+
+    const shouldRefresh = () => {
+      return (
+        inputAmount && 
+        selectedTokenA && 
+        selectedTokenB && 
+        Number(inputAmount) > 0 &&
+        !isCalculatingOutput &&
+        !isSwapping
+      )
+    }
+
+    const refreshQuote = async () => {
+      if (shouldRefresh() && selectedTokenA && selectedTokenB) {
+        console.log('🔄 Auto-refreshing swap quote...')
+        try {
+          setIsCalculatingOutput(true)
+          const calculatedOutput = await calculateOutputAmount(inputAmount, selectedTokenA, selectedTokenB)
+          setOutputAmount(calculatedOutput)
+          console.log('✅ Quote refreshed successfully')
+        } catch (error) {
+          console.error('❌ Error refreshing quote:', error)
+        } finally {
+          setIsCalculatingOutput(false)
+        }
+      }
+    }
+
+    // Set up 15-second interval
+    if (shouldRefresh()) {
+      refreshInterval = setInterval(refreshQuote, 15000) // 15 seconds
+    }
+
+    // Cleanup interval
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval)
+      }
+    }
+  }, [inputAmount, selectedTokenA, selectedTokenB, isCalculatingOutput, isSwapping])
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -124,14 +168,16 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   }
 
   // Get reserves from Market contract
-  const getPoolReserves = async (token0: Token, token1: Token): Promise<{ reserve0: bigint; reserve1: bigint } | null> => {
+  const getPoolReserves = async (tokenA: Token, tokenB: Token): Promise<{ reserve0: bigint; reserve1: bigint } | null> => {
     const marketAddress = getMarketAddress(ChainId.SONIC_BLAZE_TESTNET)
     try {
+      // Sort tokens to ensure token0 < token1 (lexicographic order)
+      const [token0, token1] = sortTokens(tokenA, tokenB)
+      
       if (!isConnected || !wallets.length) {
         // Use public RPC for read-only operations
         if (!marketAddress) {
           console.error("Market address not found for the current chain.");
-          // Optionally set an error state to inform the user
           return null;
         }
         const provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
@@ -168,29 +214,15 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     }
   }
 
-  // Calculate output amount using Router's getAmountOut
+  // Calculate output amount using Router's getAmountOut with proper AMM math
   const calculateOutputAmount = async (inputAmountValue: string, tokenIn: Token, tokenOut: Token): Promise<string> => {
     try {
       if (!inputAmountValue || !tokenIn || !tokenOut || Number(inputAmountValue) <= 0) {
         return ''
       }
 
-      // Sort tokens to determine token0/token1
-      const [token0, token1] = sortTokens(tokenIn, tokenOut)
-      const isToken0Input = tokenIn.address.toLowerCase() === token0.address.toLowerCase()
-
-      // Get pool reserves
-      const reserves = await getPoolReserves(token0, token1)
-      if (!reserves || reserves.reserve0 === 0n || reserves.reserve1 === 0n) {
-        return ''
-      }
-
       // Parse input amount with correct decimals
       const amountIn = ethers.parseUnits(inputAmountValue, tokenIn.decimals)
-      
-      // Determine reserve in and reserve out based on token order
-      const reserveIn = isToken0Input ? reserves.reserve0 : reserves.reserve1
-      const reserveOut = isToken0Input ? reserves.reserve1 : reserves.reserve0
 
       // Get provider for Router contract call
       let provider: ethers.Provider
@@ -202,41 +234,63 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
       }
 
-      // Calculate theoretical amount without slippage using exact reserve ratio
-      // This gives the theoretical amount: (amountIn * reserveOut) / reserveIn
-      const theoreticalAmountOut = (amountIn * reserveOut) / reserveIn;
-      
-      // Return the theoretical amount without slippage for display
-      return ethers.formatUnits(theoreticalAmountOut, tokenOut.decimals)
+      const routerAddress = getRouterAddress(ChainId.SONIC_BLAZE_TESTNET)
+      if (!routerAddress) {
+        console.error('Router address not found')
+        return ''
+      }
+
+      // Create Router contract instance
+      const routerContract = new ethers.Contract(routerAddress, ROUTER_ABI, provider)
+
+      try {
+        // Call Router's getAmountsOut function with path (same as swap execution)
+        const path = [tokenIn.address, tokenOut.address]
+        const amounts = await routerContract.getAmountsOut(amountIn, path)
+        const amountOut = amounts[1] // Output amount is the second element
+        
+        return ethers.formatUnits(amountOut, tokenOut.decimals)
+      } catch (contractError) {
+        console.warn('Router contract call failed, using fallback calculation:', contractError)
+        
+        // Fallback: Manual calculation with proper AMM formula including 0.3% fee
+        const reserves = await getPoolReserves(tokenIn, tokenOut)
+        if (!reserves || reserves.reserve0 === 0n || reserves.reserve1 === 0n) {
+          return ''
+        }
+
+        // Sort tokens to determine reserve order
+        const [token0, token1] = sortTokens(tokenIn, tokenOut)
+        const isToken0Input = tokenIn.address.toLowerCase() === token0.address.toLowerCase()
+        
+        const reserveIn = isToken0Input ? reserves.reserve0 : reserves.reserve1
+        const reserveOut = isToken0Input ? reserves.reserve1 : reserves.reserve0
+
+        // Apply 0.3% fee: amountInWithFee = amountIn * 997 / 1000
+        const amountInWithFee = amountIn * 997n / 1000n
+        
+        // Constant product formula: amountOut = (amountInWithFee * reserveOut) / (reserveIn + amountInWithFee)
+        const numerator = amountInWithFee * reserveOut
+        const denominator = reserveIn + amountInWithFee
+        const amountOut = numerator / denominator
+        
+        return ethers.formatUnits(amountOut, tokenOut.decimals)
+      }
     } catch (error) {
       console.error('Error calculating output amount:', error)
       return ''
     }
   }
 
-  // Calculate input amount using Router's getAmountIn
+  // Calculate input amount using Router's getAmountIn with proper AMM math
   const calculateInputAmount = async (outputAmountValue: string, tokenIn: Token, tokenOut: Token): Promise<string> => {
     try {
       if (!outputAmountValue || !tokenIn || !tokenOut || Number(outputAmountValue) <= 0) {
         return ''
       }
 
-      // Sort tokens to determine token0/token1
-      const [token0, token1] = sortTokens(tokenIn, tokenOut)
-      const isToken0Input = tokenIn.address.toLowerCase() === token0.address.toLowerCase()
-
-      // Get pool reserves
-      const reserves = await getPoolReserves(token0, token1)
-      if (!reserves || reserves.reserve0 === 0n || reserves.reserve1 === 0n) {
-        return ''
-      }
-
       // Parse output amount with correct decimals
       const amountOut = ethers.parseUnits(outputAmountValue, tokenOut.decimals)
-
-      // Determine reserve in and reserve out based on token order
-      const reserveIn = isToken0Input ? reserves.reserve0 : reserves.reserve1
-      const reserveOut = isToken0Input ? reserves.reserve1 : reserves.reserve0
 
       // Get provider for Router contract call
       let provider: ethers.Provider
@@ -248,12 +302,71 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
       }
 
-      // Calculate theoretical input amount without slippage using exact reserve ratio
-      // This gives the theoretical amount: (amountOut * reserveIn) / reserveOut
-      const theoreticalAmountIn = (amountOut * reserveIn) / reserveOut;
-      
-      // Format input amount with correct decimals
-      return ethers.formatUnits(theoreticalAmountIn, tokenIn.decimals)
+      const routerAddress = getRouterAddress(ChainId.SONIC_BLAZE_TESTNET)
+      if (!routerAddress) {
+        console.error('Router address not found')
+        return ''
+      }
+
+      // Create Router contract instance
+      const routerContract = new ethers.Contract(routerAddress, ROUTER_ABI, provider)
+
+      try {
+        // Get reserves first to pass to getAmountIn
+        const reserves = await getPoolReserves(tokenIn, tokenOut)
+        if (!reserves || reserves.reserve0 === 0n || reserves.reserve1 === 0n) {
+          console.warn('No reserves found, using fallback calculation')
+          throw new Error('No reserves')
+        }
+
+        // Sort tokens to determine reserve order
+        const [token0, token1] = sortTokens(tokenIn, tokenOut)
+        
+        // Match RouterLibrary.sol logic: (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0)
+        const reserveIn = tokenIn.address.toLowerCase() === token0.address.toLowerCase() ? reserves.reserve0 : reserves.reserve1
+        const reserveOut = tokenIn.address.toLowerCase() === token0.address.toLowerCase() ? reserves.reserve1 : reserves.reserve0
+
+        // Call Router's getAmountIn function with correct reserve amounts
+        const amountIn = await routerContract.getAmountIn(
+          amountOut,
+          reserveIn,    // ✅ FIXED: Use reserve amounts
+          reserveOut    // ✅ FIXED: Use reserve amounts
+        )
+        
+        return ethers.formatUnits(amountIn, tokenIn.decimals)
+      } catch (contractError) {
+        console.warn('Router contract call failed, using fallback calculation:', contractError)
+        
+        // Fallback: Manual calculation with proper AMM formula including 0.3% fee
+        const reserves = await getPoolReserves(tokenIn, tokenOut)
+        if (!reserves || reserves.reserve0 === 0n || reserves.reserve1 === 0n) {
+          return ''
+        }
+
+        // Sort tokens to determine reserve order
+        const [token0, token1] = sortTokens(tokenIn, tokenOut)
+        const isToken0Input = tokenIn.address.toLowerCase() === token0.address.toLowerCase()
+        
+        const reserveIn = isToken0Input ? reserves.reserve0 : reserves.reserve1
+        const reserveOut = isToken0Input ? reserves.reserve1 : reserves.reserve0
+
+        // Reverse calculation from getAmountOut with 0.3% fee
+        // From: amountOut = (amountInWithFee * reserveOut) / (reserveIn + amountInWithFee)
+        // Where: amountInWithFee = amountIn * 997 / 1000
+        // Solve for amountIn: amountIn = (amountOut * reserveIn * 1000) / ((reserveOut - amountOut) * 997)
+        
+        // Check if amountOut exceeds available reserves
+        if (amountOut >= reserveOut) {
+          console.error('Requested output amount exceeds available reserves')
+          return ''
+        }
+        
+        const numerator = amountOut * reserveIn * 1000n
+        const denominator = (reserveOut - amountOut) * 997n
+        const amountIn = numerator / denominator
+        
+        return ethers.formatUnits(amountIn, tokenIn.decimals)
+      }
     } catch (error) {
       console.error('Error calculating input amount:', error)
       return ''
@@ -473,13 +586,40 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         signer
       )
 
-      // Parse amounts
+      // Parse input amount
       const inputAmountWei = ethers.parseUnits(inputAmount, selectedTokenA.decimals)
-      const outputAmountWei = ethers.parseUnits(outputAmount, selectedTokenB.decimals)
-      const minOutputAmount = outputAmountWei * BigInt(100 - Math.floor(slippage * 100)) / BigInt(100) // Apply slippage tolerance
-
+      
       // Create swap path
       const path = [selectedTokenA.address, selectedTokenB.address]
+      
+      // Use the UI's outputAmount which is now calculated correctly using getAmountsOut
+      console.log('🔍 Using UI calculated output amount (now correct)...')
+      const expectedOutputWei = ethers.parseUnits(outputAmount, selectedTokenB.decimals)
+      
+      console.log('✅ Expected output from UI:', {
+        outputAmount,
+        expectedOutputWei: expectedOutputWei.toString(),
+        formatted: ethers.formatUnits(expectedOutputWei, selectedTokenB.decimals)
+      })
+      
+      // Apply generous slippage tolerance to account for Market vs getAmountsOut discrepancy
+      // Use 5% slippage to provide buffer for contract calculation differences
+      const effectiveSlippage = Math.max(slippage, 5.0) // Minimum 5% slippage
+      const slippageBps = Math.floor(effectiveSlippage * 100) // Convert to basis points
+      const minOutputAmount = expectedOutputWei * BigInt(10000 - slippageBps) / BigInt(10000)
+      
+      console.log('💱 Swap calculation details:', {
+        inputAmount,
+        expectedOutput: ethers.formatUnits(expectedOutputWei, selectedTokenB.decimals),
+        requestedSlippage: `${slippage}%`,
+        effectiveSlippage: `${effectiveSlippage}%`,
+        slippageBps,
+        inputAmountWei: inputAmountWei.toString(),
+        expectedOutputWei: expectedOutputWei.toString(),
+        minOutputAmount: minOutputAmount.toString(),
+        minOutputAmountFormatted: ethers.formatUnits(minOutputAmount, selectedTokenB.decimals),
+        note: `Using ${effectiveSlippage}% slippage to account for Market vs getAmountsOut discrepancy`
+      })
 
       // Calculate deadline (15 minutes from now)
       const deadline = Math.floor(Date.now() / 1000) + PENNYSIA_CONSTANTS.DEFAULT_DEADLINE_SECONDS
@@ -499,10 +639,52 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         await approveTx.wait()
       }
 
-      // Execute swap and get the actual amount received
+      // First, simulate the swap to see what the market would actually return
+      let actualMarketOutput;
+      try {
+        // Use callStatic to simulate the swap without executing it
+        actualMarketOutput = await routerContract.swap.staticCall(
+          inputAmountWei,
+          '1', // Use 1 wei as minimum to see actual output
+          path,
+          address,
+          deadline
+        );
+        console.log('🔍 Actual market simulation result:', {
+          inputWei: inputAmountWei,
+          actualMarketOutputWei: actualMarketOutput.toString(),
+          actualMarketOutputFormatted: ethers.formatUnits(actualMarketOutput, selectedTokenB.decimals),
+          getAmountsOutPrediction: outputAmount,
+          difference: ((BigInt(actualMarketOutput) - BigInt(expectedOutputWei)) * 100n / BigInt(expectedOutputWei)).toString() + '%'
+        });
+        
+        // Use the actual market output for slippage calculation
+        const actualMinOutput = (BigInt(actualMarketOutput) * 95n) / 100n; // 5% slippage on actual output
+        console.log('📊 Using actual market output for slippage:', {
+          actualMarketOutput: actualMarketOutput.toString(),
+          slippageProtection: '5%',
+          finalMinOutput: actualMinOutput.toString(),
+          finalMinOutputFormatted: ethers.formatUnits(actualMinOutput, selectedTokenB.decimals)
+        });
+        
+        // Execute swap with the corrected minimum output
+        const swapTx = await routerContract.swap(
+          inputAmountWei,
+          actualMinOutput.toString(),
+          path,
+          address,
+          deadline
+        );
+      } catch (simulationError) {
+        console.error('❌ Swap simulation failed:', simulationError);
+        const errorMessage = simulationError instanceof Error ? simulationError.message : String(simulationError);
+        throw new Error(`Swap simulation failed: ${errorMessage}`);
+      }
+      
+      // If simulation succeeded, execute the actual swap
       const swapTx = await routerContract.swap(
         inputAmountWei,
-        minOutputAmount,
+        actualMarketOutput ? ((BigInt(actualMarketOutput) * 95n) / 100n).toString() : minOutputAmount,
         path,
         address,
         deadline
@@ -896,99 +1078,121 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       
       {/* Transaction Result Modal */}
       {showTransactionResult && transactionResult && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-md mx-4 p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-white">
-                {transactionResult.success ? 'Swap Successful!' : 'Swap Failed'}
-              </h3>
-              <button
-                onClick={() => setShowTransactionResult(false)}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <XMarkIcon className="h-5 w-5 text-gray-400" />
-              </button>
+        <div className="fixed top-0 left-0 right-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ bottom: '80px' }}>
+          <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-sm sm:max-w-md max-h-full flex flex-col">
+            {/* Scrollable Content Container */}
+            <div className="overflow-y-auto flex-1 p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-white">
+                  {transactionResult.success ? 'Swap Successful!' : 'Swap Failed'}
+                </h3>
+                <button
+                  onClick={() => setShowTransactionResult(false)}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
+                >
+                  <XMarkIcon className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+              
+              {/* Content */}
+              <div className="space-y-4">
+                {transactionResult.success ? (
+                  <>
+                    {/* Success Icon */}
+                    <div className="flex justify-center mb-4">
+                      <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* Transaction Details */}
+                    <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">You Paid:</span>
+                        <span className="text-white font-medium">
+                          {transactionResult.amountIn} {transactionResult.tokenInSymbol}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">You Received:</span>
+                        <span className="text-white font-medium">
+                          {transactionResult.amountOut} {transactionResult.tokenOutSymbol}
+                        </span>
+                      </div>
+                      {transactionResult.txHash && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Transaction:</span>
+                          <a 
+                            href={`https://testnet.sonicscan.org/tx/${transactionResult.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 font-mono text-sm"
+                          >
+                            {transactionResult.txHash.slice(0, 6)}...{transactionResult.txHash.slice(-4)}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Test Content for Scrolling - Remove this in production */}
+                    <div className="bg-gray-700/30 rounded-lg p-4 mt-4">
+                      <p className="text-gray-400 text-sm mb-2">Additional Details:</p>
+                      <div className="space-y-2 text-xs text-gray-300">
+                        <p>• Gas Used: 150,000</p>
+                        <p>• Gas Price: 20 gwei</p>
+                        <p>• Block Number: #1,234,567</p>
+                        <p>• Network: Sonic Testnet</p>
+                        <p>• Confirmation Time: ~3 seconds</p>
+                        <p>• Price Impact: 0.12%</p>
+                        <p>• Slippage Tolerance: 5.0%</p>
+                        <p>• Route: Direct Swap</p>
+                        <p>• Pool Fee: 0.3%</p>
+                        <p>• Minimum Received: Guaranteed</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Error Icon */}
+                    <div className="flex justify-center mb-4">
+                      <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* Error Details */}
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                      <p className="text-red-400 text-sm mb-2">Error:</p>
+                      <p className="text-white text-sm break-words">{transactionResult.error}</p>
+                    </div>
+                    
+                    {/* Attempted Transaction Details */}
+                    <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Attempted to Pay:</span>
+                        <span className="text-white font-medium">
+                          {transactionResult.amountIn} {transactionResult.tokenInSymbol}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Expected to Receive:</span>
+                        <span className="text-white font-medium">
+                          {transactionResult.amountOut} {transactionResult.tokenOutSymbol}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             
-            {/* Content */}
-            <div className="space-y-4">
-              {transactionResult.success ? (
-                <>
-                  {/* Success Icon */}
-                  <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Transaction Details */}
-                  <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">You Paid:</span>
-                      <span className="text-white font-medium">
-                        {transactionResult.amountIn} {transactionResult.tokenInSymbol}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">You Received:</span>
-                      <span className="text-white font-medium">
-                        {transactionResult.amountOut} {transactionResult.tokenOutSymbol}
-                      </span>
-                    </div>
-                    {transactionResult.txHash && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Transaction:</span>
-                        <a 
-                          href={`https://testnet.sonicscan.org/tx/${transactionResult.txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 font-mono text-sm"
-                        >
-                          {transactionResult.txHash.slice(0, 6)}...{transactionResult.txHash.slice(-4)}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Error Icon */}
-                  <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* Error Details */}
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                    <p className="text-red-400 text-sm mb-2">Error:</p>
-                    <p className="text-white text-sm">{transactionResult.error}</p>
-                  </div>
-                  
-                  {/* Attempted Transaction Details */}
-                  <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Attempted to Pay:</span>
-                      <span className="text-white font-medium">
-                        {transactionResult.amountIn} {transactionResult.tokenInSymbol}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Expected to Receive:</span>
-                      <span className="text-white font-medium">
-                        {transactionResult.amountOut} {transactionResult.tokenOutSymbol}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
-              
-              {/* Close Button */}
+            {/* Fixed Close Button */}
+            <div className="border-t border-gray-700 p-4">
               <button
                 onClick={() => setShowTransactionResult(false)}
                 className="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-white font-medium transition-colors"

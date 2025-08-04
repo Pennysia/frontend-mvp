@@ -1,7 +1,8 @@
 'use client'
 
+import React from 'react'
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
-import { XMarkIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useLiquidity, LiquidityPosition } from '../hooks/useLiquidity'
 import { useLiquidityActions } from '../hooks/useLiquidityActions'
 import { useScrollLock } from '../hooks/useScrollLock'
@@ -155,6 +156,8 @@ const TokenWithdrawalControl = memo(({
     </div>
   )
 })
+
+TokenWithdrawalControl.displayName = 'TokenWithdrawalControl'
 
 export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddLiquidity, onTransactionComplete }: RemoveLiquidityModalProps) {
   const [isRemoving, setIsRemoving] = useState(false)

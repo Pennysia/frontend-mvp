@@ -33,7 +33,7 @@ function FeatureCards() {
                         </span>
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 text-medium transition-colors duration-300">
-                        A true lifetime passive income generator. Provide liquidity, and it's all done. Your crypto will work for you.
+                        A true lifetime passive income generator. Provide liquidity, and it&apos;s all done. Your crypto will work for you.
                     </p>
                 </div>
 

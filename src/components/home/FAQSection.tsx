@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-export default function FAQSection() {
+function FAQSection() {
   return (
     <div className="max-w-4xl mx-auto py-24 mb-24 px-4 sm:px-0">
       <h2 className="text-3xl md:text-4xl font-base text-center text-[#2E2F46] dark:text-white mb-24">
@@ -72,3 +72,5 @@ export default function FAQSection() {
     </div>
   )
 }
+
+export default React.memo(FAQSection)

@@ -1,13 +1,30 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import HomeFooter from "@/components/HomeFooter";
 import HeroSection from "@/components/home/HeroSection";
-import FeatureCards from "@/components/home/FeatureCards";
 import ZigzagDecorator from "@/components/home/ZigzagDecorator";
-import TechnologySection from "@/components/home/TechnologySection";
-import FAQSection from "@/components/home/FAQSection";
-import CTASection from "@/components/home/CTASection";
-import LearnMoreSection from "@/components/home/LearnMoreSection";
+
+// Dynamic imports for heavy components with loading states
+const FeatureCards = dynamic(() => import("@/components/home/FeatureCards"), {
+  loading: () => <div className="h-32 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-6xl" />
+});
+
+const TechnologySection = dynamic(() => import("@/components/home/TechnologySection"), {
+  loading: () => <div className="h-48 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-6xl" />
+});
+
+const FAQSection = dynamic(() => import("@/components/home/FAQSection"), {
+  loading: () => <div className="h-32 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-4xl" />
+});
+
+const CTASection = dynamic(() => import("@/components/home/CTASection"), {
+  loading: () => <div className="h-24 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-6xl" />
+});
+
+const LearnMoreSection = dynamic(() => import("@/components/home/LearnMoreSection"), {
+  loading: () => <div className="h-32 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-6xl" />
+});
 
 export default function Home() {
   return (

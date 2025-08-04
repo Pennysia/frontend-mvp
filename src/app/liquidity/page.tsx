@@ -25,7 +25,7 @@ export default function LiquidityPage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[var(--background)] flex items-center justify-center">
+      <div className="pt-20 md:pt-24 h-[100vh] bg-gray-50 dark:bg-[var(--background)] overflow-y-auto">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
@@ -52,9 +52,9 @@ export default function LiquidityPage() {
           <div className="lg:col-span-3">
             <div className="p-2 text-sm transition-colors duration-300">
               <div className="flex items-left md:items-center justify-between mb-6 flex-col md:flex-row w-full gap-4">
-                <div className="flex flex-col items-left space-y-2 p-2">
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Your Positions</h2>
-                  <p className="font-light text-sm text-gray-600 dark:text-gray-400">Provide liquidity to earn fees and rewards from trading activity</p>
+                <div className="flex flex-col items-left gap-4 p-2">
+                  <h2 className="text-3xl md:text-4xl font-base text-gray-900 dark:text-white transition-colors duration-300">Your Positions</h2>
+                  <p className="font-light text-base text-gray-600 dark:text-gray-400">Provide liquidity to earn fees and rewards from trading activity</p>
                 </div>
                 <div className="flex space-x-3 px-2">
                   <button

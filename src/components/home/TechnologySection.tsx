@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function TechnologySection() {
+function TechnologySection() {
   return (
     <div className="max-w-6xl mx-auto md:mt-20 mb-16 px-4 sm:px-0">
       <h2 className="text-3xl md:text-4xl font-base text-center text-[#2E2F46] dark:text-white mb-24">
@@ -34,11 +34,11 @@ export default function TechnologySection() {
               </p>
             </div>
             <h3 className="text-2xl md:text-3xl font-normal text-[#2E2F46] dark:text-white mb-3">
-              Guaranteed liquidity and constant fees.
+              Guaranteed liquidity with constant fees.
             </h3>
             <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
               <li>• Multi-hop routing for best prices</li>
-              <li>• Directional position support</li>
+              <li>• Liquidity available at all price points.</li>
               <li>• 0.3% fixed fee structure</li>
             </ul>
             <Link
@@ -94,8 +94,8 @@ export default function TechnologySection() {
               </h3>
               <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
                 <li>• 4-reserve system architecture</li>
-                <li>• Long/short position support</li>
-                <li>• Automatic fee distribution</li>
+                <li>• Long/short liquidity position support</li>
+                <li>• Automatic fee distribution and compounding</li>
               </ul>
               <Link
                 href="/liquidity"
@@ -152,8 +152,8 @@ export default function TechnologySection() {
               </h3>
               <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
                 <li>• Real-time price feeds</li>
-                <li>• Multi-source data aggregation</li>
-                <li>• Decentralized oracle network</li>
+                <li>• Manipulation resistance with cube root.</li>
+                <li>• Easily integrate with your dApp.</li>
               </ul>
               <Link
                 href="https://docs.pennysia.com"
@@ -184,3 +184,5 @@ export default function TechnologySection() {
     </div>
   )
 }
+
+export default React.memo(TechnologySection)

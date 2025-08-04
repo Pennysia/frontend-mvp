@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 
-export default function FeatureCards() {
+function FeatureCards() {
     return (
         <div>
             <h3 className="text-3xl md:text-4xl font-base text-[#2E2F46] dark:text-white mb-4 text-center pt-24 mb-24">
@@ -26,15 +26,14 @@ export default function FeatureCards() {
                             />
                         </div>
                     </div>
-                    <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                    <h3 className="pt-6 text-2xl font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
                         Lifetime Passive <br />
                         <span className="bg-gradient-to-b from-[#2E2F46] to-[#2E2F46]/50 dark:from-white dark:to-[#555C6F]/50 text-transparent bg-clip-text block">
                             Income Generator
                         </span>
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-base transition-colors duration-300">
-                        Take precise long or short positions with directional liquidity
-                        positions
+                    <p className="text-gray-600 dark:text-gray-400 text-medium transition-colors duration-300">
+                        A true lifetime passive income generator. Provide liquidity, and it's all done. Your crypto will work for you.
                     </p>
                 </div>
 
@@ -54,15 +53,15 @@ export default function FeatureCards() {
                             />
                         </div>
                     </div>
-                    <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                    <h3 className="pt-6 text-2xl font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
                         Bidirectional <br />
                         <span className="bg-gradient-to-b from-[#2E2F46]  to-[#2E2F46]/50 dark:from-white dark:to-[#555C6F]/50 text-transparent bg-clip-text block">
                             Liquidity Prediction
                         </span>
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-base transition-colors duration-300">
-                        Earn fees from trading activity while your crypto generates
-                        passive income
+                    <p className="text-gray-600 dark:text-gray-400 text-medium transition-colors duration-300">
+                        Predict market movements with your liquidity positions
+                        to maximize returns. Your conviction, your rewards.
                     </p>
                 </div>
 
@@ -82,18 +81,20 @@ export default function FeatureCards() {
                             />
                         </div>
                     </div>
-                    <h3 className="pt-6 text-2xl font-semibold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                    <h3 className="pt-6 text-2xl font-medium text-gray-900 dark:text-white mb-2 transition-colors duration-300">
                         Decentralized and <br />
                         <span className="bg-gradient-to-b from-[#2E2F46]  to-[#2E2F46]/50 dark:from-white dark:to-[#555C6F]/50 text-transparent bg-clip-text block">
                             Automated Markets
                         </span>
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-base transition-colors duration-300">
-                        Innovative 4-reserve architecture for enhanced liquidity and
-                        trading efficiency
+                    <p className="text-gray-600 dark:text-gray-400 text-medium transition-colors duration-300">
+                        No human intervention. Rewards are auto-compounded.
+                        Accessible worldwide to everyone.
                     </p>
                 </div>
             </div>
         </div>
     )
 }
+
+export default React.memo(FeatureCards)

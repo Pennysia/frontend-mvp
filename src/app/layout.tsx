@@ -8,7 +8,11 @@ import Header from '@/components/Header'
 import BottomNavigation from '@/components/BottomNavigation'
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true
+})
 
 export const metadata: Metadata = {
   title: "Pennysia AMM - Directional Liquidity Trading",
@@ -29,6 +33,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload critical resources */}
+        <link rel="preload" href="/pennysia-brandkit/full-logo/light-mode-full-logo.svg" as="image" />
+        <link rel="preload" href="/pennysia-brandkit/full-logo/dark-mode-full-logo.svg" as="image" />
+        <link rel="preconnect" href="https://tokens.uniswap.org" />
+        <link rel="dns-prefetch" href="https://eth.llamarpc.com" />
+        <link rel="dns-prefetch" href="https://rpc.blaze.soniclabs.com" />
+      </head>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider>
           <PrivyWrapper>

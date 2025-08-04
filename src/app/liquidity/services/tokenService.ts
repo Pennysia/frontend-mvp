@@ -30,12 +30,18 @@ export interface TokenList {
 
 class TokenService {
   private tokenList: TokenList | null = null
+  private popularTokens: Token[] = []
   private loading = false
+  private popularTokensLoaded = false
   private readonly UNISWAP_TOKEN_LIST_URL = 'https://tokens.uniswap.org'
   
   // Cache duration: 1 hour
   private readonly CACHE_DURATION = 60 * 60 * 1000
   private lastFetchTime = 0
+  
+  // Search debouncing
+  private searchTimeout: NodeJS.Timeout | null = null
+  private readonly SEARCH_DEBOUNCE_MS = 300
   
   // ERC-20 ABI for fetching token metadata
   private readonly ERC20_ABI = [

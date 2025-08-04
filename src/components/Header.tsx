@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Navigation from './Navigation'
@@ -25,6 +25,7 @@ function Header() {
                     style={{ objectFit: "cover" }}
                     priority={true}
                     quality={100}
+                    placeholder="empty"
                   />
                   <Image
                     src="/pennysia-brandkit/full-logo/dark-mode-full-logo.svg"
@@ -35,6 +36,7 @@ function Header() {
                     style={{ objectFit: "cover"}}
                     priority={true}
                     quality={100}
+                    placeholder="empty"
                   />
               </Link>
 
@@ -58,4 +60,11 @@ function Header() {
   )
 }
 
-export default React.memo(Header)
+// Custom memo comparison to prevent unnecessary re-renders
+const HeaderMemo = memo(Header, () => {
+  // Header should never re-render since it has no props that change
+  // Navigation handles its own route changes internally
+  return true
+})
+
+export default HeaderMemo

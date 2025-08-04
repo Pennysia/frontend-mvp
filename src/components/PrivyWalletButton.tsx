@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ChevronDownIcon, ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 
-export default function PrivyWalletButton() {
+function PrivyWalletButton() {
   const { ready, authenticated, login, logout } = usePrivy();
   const { wallets } = useWallets();
   const { theme } = useTheme();
@@ -130,3 +130,5 @@ export default function PrivyWalletButton() {
     </button>
   );
 }
+
+export default React.memo(PrivyWalletButton)

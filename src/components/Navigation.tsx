@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
@@ -53,7 +54,7 @@ interface NavigationProps {
   className?: string
 }
 
-export default function Navigation({ className }: NavigationProps) {
+function Navigation({ className }: NavigationProps) {
   const pathname = usePathname()
 
   return (
@@ -112,3 +113,5 @@ export function MobileNavigation({ className }: NavigationProps) {
     </nav>
   )
 }
+
+export default React.memo(Navigation)

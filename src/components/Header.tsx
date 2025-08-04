@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Navigation from './Navigation'
@@ -7,7 +8,7 @@ import ThemeToggle from './ThemeToggle'
 import PrivyWalletButton from './PrivyWalletButton'
 // Logo paths are handled as static assets
 
-export default function Header() {
+function Header() {
   return (
     <header className="fixed top-4 left-0 right-0 z-50 transition-colors duration-300 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,22 +17,22 @@ export default function Header() {
             {/* Logo */}
               <Link href="/" className="cursor-pointer transition-opacity flex items-center">
                   <Image
-                    src="/pennysia-brandkit/svg/icon/main-light-transparent-min.svg"
+                    src="/pennysia-brandkit/full-logo/light-mode-full-logo.svg"
                     alt="Pennysia logo light"
-                    width={500}
-                    height={500}
+                    width={140}
+                    height={320}
                     className="block dark:hidden"
-                    style={{ objectFit: "cover", width: "80px", height: "100%" }}
+                    style={{ objectFit: "cover" }}
                     priority={true}
                     quality={100}
                   />
                   <Image
-                    src="/pennysia-brandkit/svg/icon/main-dark-transparent-min.svg"
+                    src="/pennysia-brandkit/full-logo/dark-mode-full-logo.svg"
                     alt="Pennysia logo dark"
-                    width={500}
-                    height={500}
+                    width={140}
+                    height={320}
                     className="hidden dark:block"
-                    style={{ objectFit: "cover", width: "80px", height: "100%" }}
+                    style={{ objectFit: "cover"}}
                     priority={true}
                     quality={100}
                   />
@@ -56,3 +57,5 @@ export default function Header() {
     </header>
   )
 }
+
+export default React.memo(Header)

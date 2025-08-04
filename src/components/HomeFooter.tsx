@@ -1,48 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { CodeBracketIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 
 export default function HomeFooter() {
     return (
         <footer className="max-w-7xl mx-auto rounded-t-4xl bg-gray-100 dark:bg-white/2">
             <div className="px-8 sm:px-12">
-                <div className="py-4">
+                <div className="py-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8">
                         {/* Brand Section */}
                         <div className="col-span-1 md:col-span-1">
-                            <Link href="/" className="cursor-pointer transition-opacity flex items-center">
+                            <Link href="/" className="cursor-pointer transition-opacity flex items-center w-fit">
                                 <Image
-                                    src="/pennysia-brandkit/svg/full-logo/full-logo-light-min.svg"
+                                    src="/pennysia-brandkit/full-logo/light-mode-full-logo.svg"
                                     alt="Pennysia logo light"
-                                    width={500}
-                                    height={500}
+                                    width={180}
+                                    height={400}
                                     className="block dark:hidden"
-                                    style={{ objectFit: "cover", width: "172px", height: "100%" }}
+                                    style={{ objectFit: "cover"}}
                                     priority={true}
                                     quality={100}
                                 />
                                 <Image
-                                    src="/pennysia-brandkit/svg/full-logo/full-logo-dark-min.svg"
+                                    src="/pennysia-brandkit/full-logo/dark-mode-full-logo.svg"
                                     alt="Pennysia logo dark"
-                                    width={500}
-                                    height={500}
+                                    width={180}
+                                    height={400}
                                     className="hidden dark:block"
-                                    style={{ objectFit: "cover", width: "172px", height: "100%" }}
+                                    style={{ objectFit: "cover"}}
                                     priority={true}
                                     quality={100}
                                 />
                             </Link>
-                            {/* <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                                The next-generation AMM protocol for efficient trading and
-                                liquidity provision.
-                            </p> */}
-                            <p className="text-gray-400 dark:text-gray-600 text-[10px] mb-6">
+                            <p className="text-gray-400 dark:text-gray-600 text-[10px] mb-6 ">
                                 Pennysia Labs hereby provides information and resources regarding the fundamental principles and functionalities of its decentralized, non-custodial liquidity protocol, referred to herein as the &quot;Pennysia Protocol.&quot;
                                 The Pennysia Protocol is composed of open-source, self-executing smart contracts,
-                                which are deployed on multiple permissionless public blockchains, including,
-                                but not limited to, Ethereum (collectively, the &quot;Protocol&quot;).
+                                which are deployed on multiple permissionless public blockchains.
                                 The Interface is provided &quot;as is&quot; and &quot;as available&quot; without any warranties of any kind. Pennysia Labs does not control, operate, or maintain any instance or version of the Pennysia Protocol
                                 on any blockchain network, and shall not be held liable for any actions or inactions related to
                                 the operation or deployment of the Protocol on any blockchain network.
@@ -60,7 +55,7 @@ export default function HomeFooter() {
                                     </svg>
                                 </a>
                                 <a
-                                    href="https://t.me/Pennysia_protocol"
+                                    href="https://t.me/pennysia"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -96,7 +91,7 @@ export default function HomeFooter() {
                             </div>
                         </div>
 
-                        <div className="col-span-1 md:col-span-1 flex flex-col sm:flex-row justify-around gap-12 pt-4">
+                        <div className="col-span-1 md:col-span-1 flex flex-col sm:flex-row justify-around gap-12">
                             {/* Product Links */}
                             <div>
                                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">

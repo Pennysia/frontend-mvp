@@ -1,10 +1,11 @@
 'use client'
 
+import React from 'react'
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useEffect, useState } from 'react'
 
-export default function ThemeToggle() {
+function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -38,3 +39,5 @@ export default function ThemeToggle() {
     </button>
   )
 }
+
+export default React.memo(ThemeToggle)

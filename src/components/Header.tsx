@@ -12,7 +12,7 @@ function Header() {
   return (
     <header className="fixed top-4 left-0 right-0 z-50 transition-colors duration-300 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white/80 dark:bg-[var(--background)]/80 backdrop-blur-xl border border-gray-200/50 dark:border-white/20 rounded-xl shadow-md ">
+        <div className="bg-white/80 dark:bg-[var(--background)]/80 backdrop-blur-xl border border-gray-200/50 dark:border-white/20 rounded-xl shadow-md dark:shadow-[#E7E8EB]/5 ">
           <div className="flex justify-between items-center h-16 pr-2">
             {/* Logo */}
               <Link href="/" className="cursor-pointer transition-opacity flex items-center">

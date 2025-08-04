@@ -4,13 +4,13 @@ import React from 'react'
 
 export default function FAQSection() {
   return (
-    <div className="max-w-4xl mx-auto mt-48 mb-24 px-4 sm:px-0">
+    <div className="max-w-4xl mx-auto py-24 mb-24 px-4 sm:px-0">
       <h2 className="text-3xl md:text-4xl font-base text-center text-[#2E2F46] dark:text-white mb-24">
         Frequently Asked Question
       </h2>
       <div className="space-y-4">
         {/* FAQ Item 1 */}
-        <details className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+        <details className="bg-white/50 dark:bg-transparent backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
           <summary className="p-6 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200">
             <h3 className="text-lg font-semibold text-[#2E2F46] dark:text-white">
               What is directional liquidity?
@@ -25,7 +25,7 @@ export default function FAQSection() {
         </details>
 
         {/* FAQ Item 2 */}
-        <details className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+        <details className="bg-white/50 dark:bg-transparent backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
           <summary className="p-6 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200">
             <h3 className="text-lg font-semibold text-[#2E2F46] dark:text-white">
               How do I earn passive income?
@@ -40,7 +40,7 @@ export default function FAQSection() {
         </details>
 
         {/* FAQ Item 3 */}
-        <details className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+        <details className="bg-white/50 dark:bg-transparent backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
           <summary className="p-6 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200">
             <h3 className="text-lg font-semibold text-[#2E2F46] dark:text-white">
               Is my investment safe?
@@ -55,7 +55,7 @@ export default function FAQSection() {
         </details>
 
         {/* FAQ Item 4 */}
-        <details className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+        <details className="bg-white/50 dark:bg-transparent backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
           <summary className="p-6 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors duration-200">
             <h3 className="text-lg font-semibold text-[#2E2F46] dark:text-white">
               What are the fees?

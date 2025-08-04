@@ -20,22 +20,19 @@ export default function Home() {
         <TechnologySection />
 
         {/* Decorative Zigzag */}
-        <ZigzagDecorator/>
+        <ZigzagDecorator />
 
         {/* Feature Cards */}
-        <FeatureCards/>
+        <FeatureCards />
 
-                {/* Another Decorative Zigzag */}
-                <ZigzagDecorator />
-
-        {/* CTA Section */}
-        {/* <CTASection /> */}
-
-        {/* Learn More Section */}
-        <LearnMoreSection />
+        {/* Another Decorative Zigzag */}
+        <ZigzagDecorator />
 
         {/* FAQ Section */}
         <FAQSection />
+
+        {/* Learn More Section */}
+        <LearnMoreSection />
 
       </main>
 

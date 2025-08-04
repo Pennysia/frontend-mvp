@@ -7,12 +7,12 @@ import HomeFooter from "@/components/HomeFooter";
 export default function BrandKit() {
   return (
     <div className="pt-20 md:pt-24 min-h-screen bg-gray-50 dark:bg-[var(--background)] text-xs text-gray-600 dark:text-gray-300">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-transparent p-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-3xl md:text-4xl font-base text-gray-900 dark:text-white mb-4">
             Brand Kit
           </h1>
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-8">
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-24">
             <p className="mb-4">
               This page contains our official brand assets,
               including logos, color palettes, typography guidelines, and usage instructions
@@ -35,17 +35,17 @@ export default function BrandKit() {
           </div>
 
           <div className="prose prose-gray dark:prose-invert max-w-none">
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-8">
+            <div className="mb-24">
+              <h2 className="text-2xl md:text-3xl font-base text-gray-900 dark:text-white mb-12">
                 Logo
               </h2>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                 Full
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 w-full items-start mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 w-full items-start gap-4 mb-12">
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/full-logo/full-logo-light.png" download className="w-full h-full flex max-w-[200px] max-h-[200px] rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/full-logo/full-logo-light.png" alt="Full logo on light" width={200} height={200} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/full-logo/light-mode-full-logo.svg" download className="w-full h-full flex rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/full-logo/light-mode-full-logo.svg" alt="Full logo on light" width={200} height={200} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -57,8 +57,8 @@ export default function BrandKit() {
                   </p>
                 </div>
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/full-logo/full-logo-dark.png" download className="w-full h-full flex max-w-[200px] max-h-[200px] rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/full-logo/full-logo-dark.png" alt="Full logo on dark" width={200} height={200} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/full-logo/dark-mode-full-logo.svg" download className="w-full h-full flex rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/full-logo/dark-mode-full-logo.svg" alt="Full logo on dark" width={200} height={200} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -70,8 +70,8 @@ export default function BrandKit() {
                   </p>
                 </div>
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/full-logo/solid-logo-light.png" download className="w-full h-full flex max-w-[200px] max-h-[200px] rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/full-logo/solid-logo-light.png" alt="Solid logo on light" width={200} height={200} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/full-logo/light-mode-solid-full-logo.svg" download className="w-full h-full flex rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/full-logo/light-mode-solid-full-logo.svg" alt="Solid logo on light" width={200} height={200} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -83,8 +83,8 @@ export default function BrandKit() {
                   </p>
                 </div>
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/full-logo/solid-logo-dark.png" download className="w-full h-full flex max-w-[200px] max-h-[200px] rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/full-logo/solid-logo-dark.png" alt="Solid logo on dark" width={200} height={200} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/full-logo/dark-mode-solid-full-logo.svg" download className="w-full h-full flex rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/full-logo/dark-mode-solid-full-logo.svg" alt="Solid logo on dark" width={200} height={200} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -96,13 +96,13 @@ export default function BrandKit() {
                   </p>
                 </div>
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                 Wordmark
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 w-full items-start mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 w-full items-start mb-12 gap-4">
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/wordmark/wordmark-light.png" download className="w-full h-full flex max-w-[200px] max-h-[200px] rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/wordmark/wordmark-light.png" alt="Wordmark on light" width={200} height={200} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/wordmark/light-mode-wordmark.svg" download className="w-full h-full flex rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/wordmark/light-mode-wordmark.svg" alt="Wordmark on light" width={200} height={200} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -114,8 +114,8 @@ export default function BrandKit() {
                   </p>
                 </div>
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/wordmark/wordmark-dark.png" download className="w-full h-full flex max-w-[200px] max-h-[200px] rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/wordmark/wordmark-dark.png" alt="Wordmark on dark" width={200} height={200} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/wordmark/dark-mode-wordmark.svg" download className="w-full h-full flex rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/wordmark/dark-mode-wordmark.svg" alt="Wordmark on dark" width={200} height={200} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -127,13 +127,13 @@ export default function BrandKit() {
                   </p>
                 </div>
               </div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                 Icon
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 w-full items-start mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 w-full items-start mb-12 gap-4">
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/icon/light.png" download className="w-full h-full flex max-w-[160px] max-h-[160px] rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/icon/light.png" alt="Icon on light" width={160} height={160} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/icon/light-mode-icon.svg" download className="w-full h-full flex  rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/icon/light-mode-icon.svg" alt="Icon on light" width={160} height={160} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -145,8 +145,8 @@ export default function BrandKit() {
                   </p>
                 </div>
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/icon/dark.png" download className="w-full h-full flex max-w-[160px] max-h-[160px] rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/icon/dark.png" alt="Icon on dark" width={160} height={160} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/icon/dark-mode-icon.svg" download className="w-full h-full flex  rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/icon/dark-mode-icon.svg" alt="Icon on dark" width={160} height={160} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -158,8 +158,8 @@ export default function BrandKit() {
                   </p>
                 </div>
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/icon/solid-light.png" download className="w-full h-full flex max-w-[160px] max-h-[160px] rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/icon/solid-light.png" alt="Solid icon on light" width={160} height={160} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/icon/light-mode-solid-icon.svg" download className="w-full h-full flex  rounded-2xl bg-white border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/icon/light-mode-solid-icon.svg" alt="Solid icon on light" width={160} height={160} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -171,8 +171,8 @@ export default function BrandKit() {
                   </p>
                 </div>
                 <div className="flex flex-col">
-                  <a href="/pennysia-brandkit/png/icon/solid-dark.png" download className="w-full h-full flex max-w-[160px] max-h-[160px] rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
-                    <Image src="/pennysia-brandkit/png/icon/solid-dark.png" alt="Solid icon on dark" width={160} height={160} className="w-full h-full object-contain p-4" />
+                  <a href="/pennysia-brandkit/icon/dark-mode-solid-icon.svg" download className="w-full h-full flex rounded-2xl bg-black border border-gray-200 dark:border-gray-800 items-center justify-center group relative">
+                    <Image src="/pennysia-brandkit/icon/dark-mode-solid-icon.svg" alt="Solid icon on dark" width={160} height={160} className="w-full h-full object-contain p-4" />
                     <div className="rounded-2xl absolute inset-0 bg-black/50 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -186,11 +186,11 @@ export default function BrandKit() {
               </div>
             </div>
 
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-8">
+            <div className="mb-12">
+              <h2 className="text-2xl md:text-3xl font-base text-gray-900 dark:text-white mb-12">
                 Color
               </h2>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                 Primary
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 w-full items-start mb-4">
@@ -226,8 +226,8 @@ export default function BrandKit() {
                 </div>
               </div>
             </div>
-            <div className="mb-8">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="mb-24">
+              <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                 Secondary
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 w-full items-start mb-4">
@@ -296,7 +296,7 @@ export default function BrandKit() {
               </div>
             </div>
             <div className="mb-8">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                 Accent
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-0 w-full items-start mb-4">
@@ -343,43 +343,43 @@ export default function BrandKit() {
               </div>
             </div>
 
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-8">
+            <div className="mb-24">
+              <h2 className="text-2xl md:text-3xl font-base text-gray-900 dark:text-white mb-12">
                 Typography
               </h2>
               <div className="mb-8">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                   Headlines
                 </h3>
                 <div className="w-full items-start mb-4">
-                <p className="text-[32px] font-bold text-gray-900 dark:text-white mb-1">
-                  Inter Bold 32px
-                </p>
-                <p className="text-[24px] font-semibold text-gray-900 dark:text-white mb-1">
-                  Inter Semi Bold 24px
-                </p>
-                <p className="text-[20px] font-semibold text-gray-900 dark:text-white mb-1">
-                  Inter Semi Bold 20px
-                </p>
-                <p className="text-[16px] font-semibold text-gray-900 dark:text-white mb-1">
-                  Inter Semi Bold 16px
-                </p>
+                  <p className="text-[32px] font-bold text-gray-900 dark:text-white mb-1">
+                    Inter Bold 32px
+                  </p>
+                  <p className="text-[24px] font-semibold text-gray-900 dark:text-white mb-1">
+                    Inter Semi Bold 24px
+                  </p>
+                  <p className="text-[20px] font-semibold text-gray-900 dark:text-white mb-1">
+                    Inter Semi Bold 20px
+                  </p>
+                  <p className="text-[16px] font-semibold text-gray-900 dark:text-white mb-1">
+                    Inter Semi Bold 16px
+                  </p>
                 </div>
               </div>
               <div className="mb-8">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-lg font-base text-gray-900 dark:text-white mb-4 rounded-full px-4 w-fit bg-[#555C6F]/10">
                   Body
                 </h3>
                 <div className="w-full items-start mb-8">
-                <p className="text-[14px] font-base text-gray-900 dark:text-white mb-1">
-                  Inter Medium 14px
-                </p>
-                <p className="text-[12px] font-base text-gray-900 dark:text-white mb-1">
-                  Inter Medium 12px
-                </p>
-                <p className="text-[10px] font-base text-gray-900 dark:text-white mb-1">
-                  Inter Medium 10px
-                </p>
+                  <p className="text-[14px] font-base text-gray-900 dark:text-white mb-1">
+                    Inter Medium 14px
+                  </p>
+                  <p className="text-[12px] font-base text-gray-900 dark:text-white mb-1">
+                    Inter Medium 12px
+                  </p>
+                  <p className="text-[10px] font-base text-gray-900 dark:text-white mb-1">
+                    Inter Medium 10px
+                  </p>
                 </div>
               </div>
             </div>

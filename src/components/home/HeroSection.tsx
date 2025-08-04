@@ -20,9 +20,13 @@ export default function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 pb-0 px-4 sm:px-8 flex flex-col items-center pt-32 md:pt-0 md:h-full md:items-center md:justify-center mb-28">
-        <div className="border border-[#2E2F46]/30 dark:border-white/60 rounded-full py-2 px-4 mb-6">
-          <p className="text-xs font-medium text-[#2E2F46]/50 dark:text-white">
-            Coming Soon...
+        <div className="flex gap-3 items-center border border-[#2E2F46]/30 dark:border-white/30 rounded-full py-2 px-4 mb-6">
+          <div className="relative">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
+          </div>
+          <p className="text-xs font-light text-[#2E2F46] dark:text-white/80">
+            Live On Sonic Blaze Testnet
           </p>
         </div>
 

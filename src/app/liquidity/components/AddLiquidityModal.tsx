@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { XMarkIcon, ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import TokenSelectorModal from '../../../components/TokenSelectorModal'
 import DirectionSlider from './DirectionSlider'
@@ -148,7 +148,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       : [tokenB, tokenA]
   }
 
-  const handleTokenAChange = useCallback((token: Token | null) => {
+  const handleTokenASelection = (token: Token | null) => {
     if (!token) {
       setSelectedTokenA(null)
       setShowTokenSelectorA(false)
@@ -180,9 +180,9 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         }
       }
     }
-  }, [selectedTokenB, amountA, amountB])
+  }
 
-  const handleTokenBChange = useCallback((token: Token | null) => {
+  const handleTokenBSelection = (token: Token | null) => {
     if (!token) {
       setSelectedTokenB(null)
       setShowTokenSelectorB(false)
@@ -214,10 +214,10 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         }
       }
     }
-  }, [selectedTokenA, amountA, amountB])
+  }
 
   // Calculate decimal-aware price for new pools
-  const calculateDecimalAwarePrice = useCallback(() => {
+  const calculateDecimalAwarePrice = () => {
     if (!selectedTokenA || !selectedTokenB || !amountA || !amountB) {
       setCalculatedPrice(null)
       return
@@ -245,10 +245,10 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       console.error('Error calculating decimal-aware price:', error)
       setCalculatedPrice(null)
     }
-  }, [selectedTokenA, selectedTokenB, amountA, amountB])
+  }
 
   // Direct pool detection using getReserves() - simplified approach
-  const checkPoolExistence = useCallback(async () => {
+  const checkPoolExistence = async () => {
     if (!selectedTokenA || !selectedTokenB) {
       setPoolReserves(null)
       setIsLoadingPoolData(false)
@@ -328,7 +328,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     } finally {
       setIsLoadingPoolData(false)
     }
-  }, [selectedTokenA, selectedTokenB])
+  }
 
   // Calculate decimal-aware price when tokens and amounts change
   useEffect(() => {
@@ -337,7 +337,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     } else {
       setCalculatedPrice(null)
     }
-  }, [selectedTokenA, selectedTokenB, amountA, amountB, calculateDecimalAwarePrice])
+  }, [selectedTokenA, selectedTokenB, amountA, amountB])
 
   // Fetch token balances when tokens are selected
   useEffect(() => {
@@ -384,7 +384,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       setPoolReserves(null)
       setIsLoadingPoolData(false)
     }
-  }, [selectedTokenA, selectedTokenB, checkPoolExistence])
+  }, [selectedTokenA, selectedTokenB])
 
   // Handle liquidity submission
   const handleLiquiditySubmission = async () => {
@@ -435,8 +435,8 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
           amount0Short,
           amount1Long,
           amount1Short,
-          token0Decimals: selectedTokenA?.decimals || 18,
-          token1Decimals: selectedTokenB?.decimals || 18
+          token0Decimals: selectedTokenA.decimals,
+          token1Decimals: selectedTokenB.decimals
         },
         async () => {
           // Don't close modal immediately - show success popup first

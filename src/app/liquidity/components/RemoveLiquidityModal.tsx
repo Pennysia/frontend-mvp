@@ -81,8 +81,18 @@ const TokenWithdrawalControl = memo(({
       if (value === '' || isNaN(numValue)) {
         onAmountChange('')
       } else {
-        const clampedValue = Math.min(numValue, maxAmountNum)
-        onAmountChange(clampedValue.toString())
+        // Enhanced max balance enforcement with user feedback
+        if (numValue > maxAmountNum) {
+          const clampedValue = maxAmountNum
+          setLocalAmount(clampedValue.toString())
+          onAmountChange(clampedValue.toString())
+          toast.success(`Amount capped at max: ${clampedValue.toFixed(6)}`)
+        } else if (numValue < 0) {
+          onAmountChange('')
+          toast.error('Amount cannot be negative')
+        } else {
+          onAmountChange(numValue.toString())
+        }
       }
     }
   }
@@ -147,7 +157,7 @@ const TokenWithdrawalControl = memo(({
           <button
             key={percent}
             onClick={() => handlePercentageChange(percent)}
-            className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
+            className="w-full px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors cursor-pointer"
           >
             {percent}%
           </button>
@@ -354,7 +364,7 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
             </div>
             <button
               onClick={onClose}
-              className="p-2 border border-gray-200 dark:border-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="p-2 border border-gray-200 dark:border-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors cursor-pointer"
             >
               <XMarkIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
             </button>
@@ -370,7 +380,7 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
                 <button
                   key={percent}
                   onClick={() => setAllPercentages(percent)}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium cursor-pointer"
                 >
                   {percent}% All
                 </button>
@@ -459,14 +469,14 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={onClose}
-              className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-4 px-6 rounded-xl font-semibold transition-colors"
+              className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-4 px-6 rounded-xl font-semibold transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
-              onClick={handleRemoveLiquidity}
-              disabled={isRemoving}
-              className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl font-semibold transition-colors"
+            onClick={handleRemoveLiquidity}
+            disabled={isRemoving}
+            className="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl font-semibold transition-colors cursor-pointer"
             >
               {isRemoving ? 'Removing Liquidity...' : 'Confirm Removal'}
             </button>
@@ -487,10 +497,10 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
                 onClick={() => {
                   setShowTransactionResult(false)
                   if (transactionResult.success) {
-                    onClose() // Close the main modal on success
+                    onClose()
                   }
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"
               >
                 <XMarkIcon className="h-5 w-5 text-gray-400" />
               </button>
@@ -608,7 +618,7 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
                     onClose() // Close the main modal on success
                   }
                 }}
-                className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium"
+                className="w-full mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium cursor-pointer"
               >
                 {transactionResult.success ? 'Done' : 'Try Again'}
               </button>

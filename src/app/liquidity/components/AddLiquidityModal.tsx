@@ -13,7 +13,7 @@ import TransactionLoadingOverlay from '../../../components/ui/TransactionLoading
 import { ethers } from 'ethers'
 import { useStore } from '../../../store/useStore'
 import { getMarketAddress } from '../../../lib/sdk-utils'
-import { MARKET_ABI } from '../../../lib/abis'
+import { MARKET_ABI, ERC20_ABI } from '../../../lib/abis'
 
 interface LiquidityPosition {
   id: number
@@ -51,14 +51,29 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   const [selectedTokenB, setSelectedTokenB] = useState<Token | null>(null)
   const [amountA, setAmountA] = useState<string>('')
   const [amountB, setAmountB] = useState<string>('')
+  const [maxAmountA, setMaxAmountA] = useState<string>('')
+  const [maxAmountB, setMaxAmountB] = useState<string>('')
   const [bullishPercentage, setBullishPercentage] = useState(50)
   const [bearishPercentage, setBearishPercentage] = useState(50)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [calculatedPrice, setCalculatedPrice] = useState<{ tokenAToB: number; tokenBToA: number } | null>(null)
-  const [poolReserves, setPoolReserves] = useState<{ reserve0: bigint; reserve1: bigint } | null>(null)
-  const [isLoadingPoolData, setIsLoadingPoolData] = useState(false)
   const [showTokenSelectorA, setShowTokenSelectorA] = useState(false)
   const [showTokenSelectorB, setShowTokenSelectorB] = useState(false)
+  const [poolReserves, setPoolReserves] = useState<{ reserve0: bigint; reserve1: bigint } | null>(null)
+  const [isLoadingPoolData, setIsLoadingPoolData] = useState(false)
+  const [calculatedPrice, setCalculatedPrice] = useState<{ tokenAToB: number; tokenBToA: number } | null>(null)
+  const [showTransactionResult, setShowTransactionResult] = useState(false)
+  const [transactionResult, setTransactionResult] = useState<{
+    success: boolean
+    error?: string
+    amount0Long?: string
+    amount0Short?: string
+    amount1Long?: string
+    amount1Short?: string
+    token0Symbol?: string
+    token1Symbol?: string
+    liquidityMinted?: string
+    txHash?: string
+  } | null>(null)
 
   const { isAuthenticated } = useLiquidity()
   const { performAddLiquidity } = useLiquidityActions()
@@ -74,6 +89,56 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   
   // Lock background scroll when modal is open
   useScrollLock(isOpen)
+  
+  // Smart number formatting with appropriate precision
+  const formatSafeNumber = (value: string | number, decimals: number = 18): string => {
+    try {
+      if (!value || value === '0' || value === 0) {
+        return '0'
+      }
+      
+      // Convert to string first
+      const strValue = String(value)
+      
+      // Handle scientific notation
+      if (strValue.includes('e') || strValue.includes('E')) {
+        const num = Number(strValue)
+        if (isNaN(num)) return '0'
+        
+        // Use toFixed for numbers with scientific notation
+        return num.toFixed(8).replace(/\.?0+$/, '') // Remove trailing zeros, max 8 decimals
+      }
+      
+      // Handle regular numbers
+      const num = Number(strValue)
+      if (isNaN(num)) return '0'
+      
+      // Smart precision based on magnitude
+      if (num >= 1000) {
+        return num.toLocaleString('en-US', { maximumFractionDigits: 2 })
+      } else if (num >= 100) {
+        return num.toLocaleString('en-US', { maximumFractionDigits: 3 })
+      } else if (num >= 10) {
+        return num.toLocaleString('en-US', { maximumFractionDigits: 4 })
+      } else if (num >= 1) {
+        return num.toLocaleString('en-US', { maximumFractionDigits: 5 })
+      } else if (num >= 0.1) {
+        return num.toLocaleString('en-US', { maximumFractionDigits: 6 })
+      } else if (num >= 0.01) {
+        return num.toLocaleString('en-US', { maximumFractionDigits: 7 })
+      } else {
+        // For very small numbers, use up to 8 decimals but remove trailing zeros
+        const formatted = num.toLocaleString('en-US', { 
+          maximumFractionDigits: 8,
+          minimumFractionDigits: 0
+        })
+        return formatted.replace(/\.?0+$/, '')
+      }
+    } catch (error) {
+      console.error('Error formatting number:', error)
+      return '0'
+    }
+  }
 
   // Token sorting and validation functions
   const sortTokens = (tokenA: Token, tokenB: Token): [Token, Token] => {
@@ -215,19 +280,28 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       const [token0, token1] = sortTokens(selectedTokenA, selectedTokenB)
       
       console.log('📞 Calling getReserves() for:', token0.symbol, token1.symbol)
-      const reserves = await marketContract.getReserves(token0.address, token1.address)
       
-      const [reserve0Long, reserve0Short, reserve1Long, reserve1Short] = reserves
+      let poolExists = false
+      let reserve0Long = 0n, reserve0Short = 0n, reserve1Long = 0n, reserve1Short = 0n
       
-      console.log('📊 Reserves received:', {
-        reserve0Long: reserve0Long.toString(),
-        reserve0Short: reserve0Short.toString(), 
-        reserve1Long: reserve1Long.toString(),
-        reserve1Short: reserve1Short.toString()
-      })
-      
-      // Pool exists if reserve0Long > 0
-      const poolExists = reserve0Long > 0n
+      try {
+        const reserves = await marketContract.getReserves(token0.address, token1.address)
+        ;[reserve0Long, reserve0Short, reserve1Long, reserve1Short] = reserves
+        
+        console.log('📊 Reserves received:', {
+          reserve0Long: reserve0Long.toString(),
+          reserve0Short: reserve0Short.toString(), 
+          reserve1Long: reserve1Long.toString(),
+          reserve1Short: reserve1Short.toString()
+        })
+        
+        // Pool exists if any reserves > 0
+        poolExists = reserve0Long > 0n || reserve0Short > 0n || reserve1Long > 0n || reserve1Short > 0n
+      } catch (error: any) {
+        console.log('📝 Pool does not exist yet (getReserves failed):', error?.message || 'Unknown error')
+        // Pool doesn't exist - all reserves remain 0n, poolExists remains false
+        poolExists = false
+      }
       console.log('✅ Pool exists:', poolExists)
       
       if (poolExists) {
@@ -265,6 +339,43 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     }
   }, [selectedTokenA, selectedTokenB, amountA, amountB])
 
+  // Fetch token balances when tokens are selected
+  useEffect(() => {
+    const fetchTokenBalances = async () => {
+      if (!selectedTokenA || !selectedTokenB) return
+      
+      try {
+        const { provider, isConnected } = useStore.getState()
+        if (!isConnected || !provider) return
+
+        const signer = await provider.getSigner()
+        const userAddress = await signer.getAddress()
+
+        // Fetch balance for Token A
+        if (selectedTokenA) {
+          const tokenAContract = new ethers.Contract(selectedTokenA.address, ERC20_ABI, provider)
+          const balanceA = await tokenAContract.balanceOf(userAddress)
+          const formattedBalanceA = ethers.formatUnits(balanceA, selectedTokenA.decimals)
+          setMaxAmountA(formattedBalanceA)
+        }
+
+        // Fetch balance for Token B
+        if (selectedTokenB) {
+          const tokenBContract = new ethers.Contract(selectedTokenB.address, ERC20_ABI, provider)
+          const balanceB = await tokenBContract.balanceOf(userAddress)
+          const formattedBalanceB = ethers.formatUnits(balanceB, selectedTokenB.decimals)
+          setMaxAmountB(formattedBalanceB)
+        }
+      } catch (error) {
+        console.error('Error fetching token balances:', error)
+        setMaxAmountA('')
+        setMaxAmountB('')
+      }
+    }
+
+    fetchTokenBalances()
+  }, [selectedTokenA, selectedTokenB])
+
   // Check pool existence when tokens change
   useEffect(() => {
     if (selectedTokenA && selectedTokenB) {
@@ -289,33 +400,34 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
 
     setIsSubmitting(true)
     
+    // Calculate directional amounts based on mirrored percentages (same logic as step 3 display)
+    const totalAmountA = parseFloat(amountA)
+    const totalAmountB = parseFloat(amountB)
+    const sliderValue = bullishPercentage // Current slider position
+    
+    // Mirrored allocation logic: Token A and Token B have opposite allocations
+    // When slider is at 80%, it means 80% bullish on Token A, 20% bullish on Token B
+    const tokenABullishRatio = sliderValue / 100 // Token A bullish percentage
+    const tokenABearishRatio = (100 - sliderValue) / 100 // Token A bearish percentage
+    const tokenBBullishRatio = (100 - sliderValue) / 100 // Token B bullish percentage (mirrored)
+    const tokenBBearishRatio = sliderValue / 100 // Token B bearish percentage (mirrored)
+    
+    // For token A (first token) - use safe formatting to avoid scientific notation
+    const amount0Long = formatSafeNumber(totalAmountA * tokenABullishRatio)
+    const amount0Short = formatSafeNumber(totalAmountA * tokenABearishRatio)
+  
+    // For token B (second token) - mirrored allocation
+    const amount1Long = formatSafeNumber(totalAmountB * tokenBBullishRatio)
+    const amount1Short = formatSafeNumber(totalAmountB * tokenBBearishRatio)
+    
     try {
-      // Calculate directional amounts based on mirrored percentages (same logic as step 3 display)
-      const totalAmountA = parseFloat(amountA)
-      const totalAmountB = parseFloat(amountB)
-      const sliderValue = bullishPercentage // Current slider position
-      
-      // Mirrored allocation logic: Token A and Token B have opposite allocations
-      // When slider is at 80%, it means 80% bullish on Token A, 20% bullish on Token B
-      const tokenABullishRatio = sliderValue / 100 // Token A bullish percentage
-      const tokenABearishRatio = (100 - sliderValue) / 100 // Token A bearish percentage
-      const tokenBBullishRatio = (100 - sliderValue) / 100 // Token B bullish percentage (mirrored)
-      const tokenBBearishRatio = sliderValue / 100 // Token B bearish percentage (mirrored)
-      
-      // For token A (first token)
-      const amount0Long = (totalAmountA * tokenABullishRatio).toString()
-      const amount0Short = (totalAmountA * tokenABearishRatio).toString()
-      
-      // For token B (second token) - mirrored allocation
-      const amount1Long = (totalAmountB * tokenBBullishRatio).toString()
-      const amount1Short = (totalAmountB * tokenBBearishRatio).toString()
 
       // Use actual token addresses from selected tokens
       const token0Address = selectedTokenA.address
       const token1Address = selectedTokenB.address
 
       // Use the reusable performAddLiquidity function that handles refresh automatically
-      await performAddLiquidity(
+      const result = await performAddLiquidity(
         {
           token0Address,
           token1Address,
@@ -327,16 +439,45 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
           token1Decimals: selectedTokenB.decimals
         },
         async () => {
-          // Close modal and refresh main page positions
-          handleClose()
+          // Don't close modal immediately - show success popup first
           if (onTransactionComplete) {
             await onTransactionComplete()
           }
         }
       )
+      
+      console.log('✅ Add liquidity result:', result)
+      
+      // Show success result immediately without closing main modal
+      setTransactionResult({
+        success: true,
+        txHash: result?.txHash,
+        amount0Long,
+        amount0Short,
+        amount1Long,
+        amount1Short,
+        token0Symbol: selectedTokenA.symbol,
+        token1Symbol: selectedTokenB.symbol,
+        liquidityMinted: result?.liquidityMinted || 'N/A'
+      })
+      setShowTransactionResult(true)
+      console.log('✅ Success popup state set!')
     } catch (error) {
       console.error('Error adding liquidity:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to add liquidity')
+      
+      // Show error result
+      setTransactionResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to add liquidity',
+        amount0Long,
+        amount0Short,
+        amount1Long,
+        amount1Short,
+        token0Symbol: selectedTokenA.symbol,
+        token1Symbol: selectedTokenB.symbol,
+        txHash: ''
+      })
+      setShowTransactionResult(true)
     } finally {
       setIsSubmitting(false)
     }
@@ -397,6 +538,8 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     setBullishPercentage(50)
     setBearishPercentage(50)
     setCalculatedPrice(null)
+    setShowTransactionResult(false)
+    setTransactionResult(null)
   }
 
   const renderStep1 = () => (
@@ -408,10 +551,10 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">First Token</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First Token</label>
           <button
             onClick={() => setShowTokenSelectorA(true)}
-            className="w-full flex items-center justify-between p-3 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+            className="w-full flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             <div className="flex items-center space-x-3">
               {selectedTokenA ? (
@@ -419,7 +562,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
                     {selectedTokenA.symbol.charAt(0)}
                   </div>
-                  <span className="text-white">{selectedTokenA.symbol}</span>
+                  <span className="text-gray-900 dark:text-white">{selectedTokenA.symbol}</span>
                 </>
               ) : (
                 <span className="text-gray-400">Select first token</span>
@@ -430,10 +573,10 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Second Token</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Second Token</label>
           <button
             onClick={() => setShowTokenSelectorB(true)}
-            className="w-full flex items-center justify-between p-3 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+            className="w-full flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             <div className="flex items-center space-x-3">
               {selectedTokenB ? (
@@ -441,7 +584,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold">
                     {selectedTokenB.symbol.charAt(0)}
                   </div>
-                  <span className="text-white">{selectedTokenB.symbol}</span>
+                  <span className="text-gray-900 dark:text-white">{selectedTokenB.symbol}</span>
                 </>
               ) : (
                 <span className="text-gray-400">Select second token</span>
@@ -452,7 +595,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         </div>
 
         {poolKey && (
-          <div className="bg-gray-800 dark:bg-gray-700 rounded-lg p-4 border border-gray-700 dark:border-gray-600">
+          <div className="bg-gray-200/30 dark:bg-gray-800/30 rounded-lg p-4">
             <div className="flex items-center space-x-2">
               {isLoadingPoolData ? (
                 <>
@@ -495,45 +638,126 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {selectedTokenA?.symbol || 'Token A'} Amount
+            {maxAmountA && (
+              <span className="text-xs text-gray-400 ml-2">
+                <button 
+                type="button"
+                className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                onClick={() => {
+                  if (maxAmountA) {
+                    setAmountA(maxAmountA)
+                    // Trigger ratio enforcement
+                    const [token0, token1] = sortTokens(selectedTokenA!, selectedTokenB!)
+                    const isTokenAFirst = selectedTokenA!.address.toLowerCase() === token0.address.toLowerCase()
+                    
+                    if (poolReserves && maxAmountA && Number(maxAmountA) > 0) {
+                      const reserve0Formatted = Number(ethers.formatUnits(poolReserves.reserve0, token0.decimals))
+                      const reserve1Formatted = Number(ethers.formatUnits(poolReserves.reserve1, token1.decimals))
+                      
+                      let expectedB: number
+                      if (isTokenAFirst) {
+                        expectedB = (Number(maxAmountA) * reserve1Formatted) / reserve0Formatted
+                      } else {
+                        expectedB = (Number(maxAmountA) * reserve0Formatted) / reserve1Formatted
+                      }
+                      
+                      // Check if token B amount would exceed max balance
+                      if (maxAmountB && expectedB > Number(maxAmountB)) {
+                        const cappedB = Number(maxAmountB)
+                        setAmountB(formatSafeNumber(cappedB.toString()))
+                        
+                        let recalculatedA: number
+                        if (isTokenAFirst) {
+                          recalculatedA = (cappedB * reserve0Formatted) / reserve1Formatted
+                        } else {
+                          recalculatedA = (cappedB * reserve1Formatted) / reserve0Formatted
+                        }
+                        setAmountA(formatSafeNumber(recalculatedA.toString()))
+                        toast.success('Both amounts set to max within balance limits')
+                      } else {
+                        setAmountB(formatSafeNumber(expectedB.toString()))
+                        toast.success(`Set Token A to max: ${formatSafeNumber(maxAmountA)}`)
+                      }
+                    } else {
+                      setAmountB('')
+                      toast.success(`Set Token A to max: ${formatSafeNumber(maxAmountA)}`)
+                    }
+                  }
+                }}
+              >
+                Max: {formatSafeNumber(maxAmountA)}
+              </button>
+              </span>
+            )}
           </label>
           <div className="relative">
             <input
               type="number"
               value={amountA}
               onChange={(e) => {
-                setAmountA(e.target.value)
-                // Enforce ratio for existing pools using actual reserves
-                if (poolReserves && e.target.value && Number(e.target.value) > 0) {
-                  console.log('Pool reserves found, calculating ratio...', poolReserves)
+                let value = e.target.value
+                // Prevent negative amounts
+                const numValue = Number(value)
+                if (numValue < 0) {
+                  toast.error('Amount cannot be negative')
+                  return
+                }
+                
+                // Enforce max amount for token A
+                let cappedValue = value
+                if (maxAmountA && numValue > Number(maxAmountA)) {
+                  cappedValue = maxAmountA
+                  toast.success(`Amount capped at max balance: ${formatSafeNumber(maxAmountA)}`)
+                }
+                
+                setAmountA(cappedValue)
+                
+                // Smart ratio enforcement that respects both token balances
+                if (poolReserves && cappedValue && Number(cappedValue) > 0) {
                   const [token0, token1] = sortTokens(selectedTokenA!, selectedTokenB!)
                   const isTokenAFirst = selectedTokenA!.address.toLowerCase() === token0.address.toLowerCase()
-                  
-                  console.log('Token order:', { token0: token0.symbol, token1: token1.symbol, isTokenAFirst })
                   
                   // Calculate ratio based on actual reserves
                   const reserve0Formatted = Number(ethers.formatUnits(poolReserves.reserve0, token0.decimals))
                   const reserve1Formatted = Number(ethers.formatUnits(poolReserves.reserve1, token1.decimals))
                   
-                  console.log('Formatted reserves:', { reserve0Formatted, reserve1Formatted })
+                  let expectedB: number
+                  if (isTokenAFirst) {
+                    expectedB = (Number(cappedValue) * reserve1Formatted) / reserve0Formatted
+                  } else {
+                    expectedB = (Number(cappedValue) * reserve0Formatted) / reserve1Formatted
+                  }
                   
-                  const ratio = isTokenAFirst 
-                    ? reserve1Formatted / reserve0Formatted
-                    : reserve0Formatted / reserve1Formatted
-                  
-                  console.log('Calculated ratio:', ratio)
-                  
-                  const calculatedAmountB = Number(e.target.value) * ratio
-                  console.log('Calculated amount B:', calculatedAmountB)
-                  setAmountB(calculatedAmountB.toString())
-                } else {
-                  console.log('Ratio enforcement not triggered:', { poolReserves: !!poolReserves, value: e.target.value })
+                  // Check if token B amount would exceed max balance
+                  if (maxAmountB && expectedB > Number(maxAmountB)) {
+                    // Cap token B amount and recalculate token A amount
+                    const cappedB = Number(maxAmountB)
+                    setAmountB(formatSafeNumber(cappedB.toString()))
+                    
+                    // Recalculate token A amount based on capped token B
+                    let recalculatedA: number
+                    if (isTokenAFirst) {
+                      recalculatedA = (cappedB * reserve0Formatted) / reserve1Formatted
+                    } else {
+                      recalculatedA = (cappedB * reserve1Formatted) / reserve0Formatted
+                    }
+                    setAmountA(formatSafeNumber(recalculatedA.toString()))
+                    toast.success('Both amounts adjusted to stay within balance limits')
+                  } else {
+                    setAmountB(formatSafeNumber(expectedB.toString()))
+                  }
                 }
               }}
               placeholder="0.0"
-              className="w-full p-4 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="0"
+              max={maxAmountA || undefined}
+              step="any"
+              className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-              {selectedTokenA?.symbol || 'Token A'}
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                {selectedTokenA?.symbol?.charAt(0) || 'A'}
+              </div>
             </div>
           </div>
         </div>
@@ -541,39 +765,133 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             {selectedTokenB?.symbol || 'Token B'} Amount
+            {maxAmountB && (
+              <span className="text-xs text-gray-400 ml-2">
+                <button 
+                type="button"
+                className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                onClick={() => {
+                  if (maxAmountB) {
+                    setAmountB(maxAmountB)
+                    // Trigger ratio enforcement
+                    const [token0, token1] = sortTokens(selectedTokenA!, selectedTokenB!)
+                    const isTokenAFirst = selectedTokenA!.address.toLowerCase() === token0.address.toLowerCase()
+                    
+                    if (poolReserves && maxAmountB && Number(maxAmountB) > 0) {
+                      const reserve0Formatted = Number(ethers.formatUnits(poolReserves.reserve0, token0.decimals))
+                      const reserve1Formatted = Number(ethers.formatUnits(poolReserves.reserve1, token1.decimals))
+                      
+                      let expectedA: number
+                      if (isTokenAFirst) {
+                        expectedA = (Number(maxAmountB) * reserve0Formatted) / reserve1Formatted
+                      } else {
+                        expectedA = (Number(maxAmountB) * reserve1Formatted) / reserve0Formatted
+                      }
+                      
+                      // Check if token A amount would exceed max balance
+                      if (maxAmountA && expectedA > Number(maxAmountA)) {
+                        const cappedA = Number(maxAmountA)
+                        setAmountA(formatSafeNumber(cappedA.toString()))
+                        
+                        let recalculatedB: number
+                        if (isTokenAFirst) {
+                          recalculatedB = (cappedA * reserve1Formatted) / reserve0Formatted
+                        } else {
+                          recalculatedB = (cappedA * reserve0Formatted) / reserve1Formatted
+                        }
+                        setAmountB(formatSafeNumber(recalculatedB.toString()))
+                        toast.success('Both amounts set to max within balance limits')
+                      } else {
+                        setAmountA(formatSafeNumber(expectedA.toString()))
+                        toast.success(`Set Token B to max: ${formatSafeNumber(maxAmountB)}`)
+                      }
+                    } else {
+                      setAmountA('')
+                      toast.success(`Set Token B to max: ${formatSafeNumber(maxAmountB)}`)
+                    }
+                  }
+                }}
+              >
+                Max: {formatSafeNumber(maxAmountB)}
+              </button>
+              </span>
+            )}
           </label>
           <div className="relative">
             <input
               type="number"
               value={amountB}
               onChange={(e) => {
-                setAmountB(e.target.value)
-                // Enforce ratio for existing pools using actual reserves
-                if (poolReserves && e.target.value && Number(e.target.value) > 0) {
+                let value = e.target.value
+                // Prevent negative amounts
+                const numValue = Number(value)
+                if (numValue < 0) {
+                  toast.error('Amount cannot be negative')
+                  return
+                }
+                
+                // Enforce max amount for token B
+                let cappedValue = value
+                if (maxAmountB && numValue > Number(maxAmountB)) {
+                  cappedValue = maxAmountB
+                  toast.success(`Amount capped at max balance: ${formatSafeNumber(maxAmountB)}`)
+                }
+                
+                setAmountB(cappedValue)
+                
+                // Smart ratio enforcement that respects both token balances
+                if (poolReserves && cappedValue && Number(cappedValue) > 0) {
                   const [token0, token1] = sortTokens(selectedTokenA!, selectedTokenB!)
                   const isTokenAFirst = selectedTokenA!.address.toLowerCase() === token0.address.toLowerCase()
                   
                   // Calculate ratio based on actual reserves
-                  const ratio = isTokenAFirst 
-                    ? Number(ethers.formatUnits(poolReserves.reserve0, selectedTokenA!.decimals)) / Number(ethers.formatUnits(poolReserves.reserve1, selectedTokenB!.decimals))
-                    : Number(ethers.formatUnits(poolReserves.reserve1, selectedTokenB!.decimals)) / Number(ethers.formatUnits(poolReserves.reserve0, selectedTokenA!.decimals))
+                  const reserve0Formatted = Number(ethers.formatUnits(poolReserves.reserve0, token0.decimals))
+                  const reserve1Formatted = Number(ethers.formatUnits(poolReserves.reserve1, token1.decimals))
                   
-                  const calculatedAmountA = Number(e.target.value) * ratio
-                  setAmountA(calculatedAmountA.toString())
+                  let expectedA: number
+                  if (isTokenAFirst) {
+                    expectedA = (Number(cappedValue) * reserve0Formatted) / reserve1Formatted
+                  } else {
+                    expectedA = (Number(cappedValue) * reserve1Formatted) / reserve0Formatted
+                  }
+                  
+                  // Check if token A amount would exceed max balance
+                  if (maxAmountA && expectedA > Number(maxAmountA)) {
+                    // Cap token A amount and recalculate token B amount
+                    const cappedA = Number(maxAmountA)
+                    setAmountA(formatSafeNumber(cappedA.toString()))
+                    
+                    // Recalculate token B amount based on capped token A
+                    let recalculatedB: number
+                    if (isTokenAFirst) {
+                      recalculatedB = (cappedA * reserve1Formatted) / reserve0Formatted
+                    } else {
+                      recalculatedB = (cappedA * reserve0Formatted) / reserve1Formatted
+                    }
+                    setAmountB(formatSafeNumber(recalculatedB.toString()))
+                    toast.success('Both amounts adjusted to stay within balance limits')
+                  } else {
+                    setAmountA(formatSafeNumber(expectedA.toString()))
+                  }
                 }
               }}
               placeholder="0.0"
-              className="w-full p-4 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="0"
+              max={maxAmountB || undefined}
+              step="any"
+              className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-              {selectedTokenB?.symbol || 'Token B'}
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                {selectedTokenB?.symbol?.charAt(0) || 'B'}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {poolReserves && selectedTokenA && selectedTokenB && amountA && amountB && (
-        <div className="bg-gray-800 dark:bg-gray-700 rounded-lg p-4 border border-gray-700 dark:border-gray-600">
+        <div className="bg-gray-200/30 dark:bg-gray-800/30 rounded-lg p-4">
           <div className="text-sm text-gray-300 mb-2">Pool Price Impact</div>
           <div className="text-green-400 text-sm">
             Current ratio maintained: 1 {selectedTokenA.symbol} = {poolPrice.toLocaleString()} {selectedTokenB.symbol}
@@ -583,7 +901,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
 
       {/* Only show Initial Pool Price widget for NEW pools */}
       {!poolReserves && !isLoadingPoolData && selectedTokenA && selectedTokenB && calculatedPrice && (
-        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="text-sm text-blue-300 mb-2">Initial Pool Price (Decimal-Adjusted)</div>
           <div className="space-y-2">
             <div className="text-blue-400 text-sm">
@@ -667,36 +985,36 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         </div>
 
         {/* Token Amount Breakdown */}
-        <div className="bg-gray-800 dark:bg-gray-700 rounded-lg p-4 border border-gray-700 dark:border-gray-600">
+        <div className="bg-gray-200/30 dark:bg-gray-800/30 rounded-lg p-4">
           <div className="text-sm text-gray-300 mb-3">Token Allocation Breakdown</div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="text-xs text-gray-400">{selectedTokenA?.symbol} Distribution</div>
               <div className="flex justify-between text-sm">
                 <span className="text-green-400">Long:</span>
-                <span className="text-green-400 font-mono">{amountALong.toFixed(4)}</span>
+                <span className="text-green-400 font-mono">{amountALong.toFixed(8)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-red-400">Short:</span>
-                <span className="text-red-400 font-mono">{amountAShort.toFixed(4)}</span>
+                <span className="text-red-400 font-mono">{amountAShort.toFixed(8)}</span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="text-xs text-gray-400">{selectedTokenB?.symbol} Distribution</div>
               <div className="flex justify-between text-sm">
-                <span className="text-green-400">Long:</span>
-                <span className="text-green-400 font-mono">{amountBLong.toFixed(4)}</span>
+                <span className="text-green-600 dark:text-green-400">Long:</span>
+                <span className="text-green-600 dark:text-green-400 font-mono">{amountBLong.toFixed(8)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-red-400">Short:</span>
-                <span className="text-red-400 font-mono">{amountBShort.toFixed(4)}</span>
+                <span className="text-red-600 dark:text-red-400">Short:</span>
+                <span className="text-red-600 dark:text-red-400 font-mono">{amountBShort.toFixed(8)}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
-          <div className="text-yellow-400 text-sm">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="text-yellow-800 dark:text-yellow-400 text-sm">
             <strong>Position Explanation:</strong> Moving the slider left favors {selectedTokenA?.symbol} bullish positions, 
             while moving right favors {selectedTokenB?.symbol} bullish positions. Your liquidity will be allocated 
             proportionally across long and short positions for both tokens.
@@ -708,7 +1026,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 w-full max-w-md md:max-w-xl max-h-[calc(100vh-4rem)] overflow-y-auto relative">
+      <div className="bg-white dark:bg-[var(--background)] rounded-2xl border border-gray-200 dark:border-gray-800 w-full max-w-md md:max-w-xl max-h-[calc(100vh-4rem)] overflow-y-auto relative">
         {/* Loading Overlay */}
         <TransactionLoadingOverlay 
           isVisible={isSubmitting}
@@ -717,10 +1035,10 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         />
         <div className="p-6 pb-24 md:pb-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Add Liquidity</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Add Liquidity</h2>
             <button
               onClick={handleClose}
-              className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+              className="p-2 border border-gray-200 dark:border-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors cursor-pointer"
             >
               <XMarkIcon className="h-5 w-5 text-gray-400" />
             </button>
@@ -759,7 +1077,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
               onClick={() => setCurrentStep(currentStep - 1)}
               disabled={currentStep === 1}
               hidden={currentStep === 1}
-              className="w-full justify-center flex items-center space-x-2 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
+              className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-4 px-6 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2 cursor-pointer"
             >
               <ArrowLeftIcon className="h-4 w-4" />
               <span>Back</span>
@@ -778,15 +1096,14 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
                 (currentStep === 2 && !canProceedToStep3) ||
                 (currentStep === 3 && (!canComplete || isSubmitting))
               }
-              className="w-full justify-center flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2 cursor-pointer"
             >
               <span>
                 {currentStep === 3 
                   ? (isSubmitting ? 'Adding Liquidity...' : 'Provide Liquidity') 
-                  : 'Continue'
-                }
+                  : (currentStep === 2 ? 'Review' : 'Next')}
               </span>
-              {currentStep < 3 && <ArrowRightIcon className="h-4 w-4" />}
+              <ArrowRightIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -808,6 +1125,174 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         title="Select second token"
         excludeToken={selectedTokenA}
       />
+      
+      {/* Transaction Result Modal */}
+      {showTransactionResult && transactionResult && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {transactionResult.success ? 'Liquidity Added Successfully!' : 'Transaction Failed'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowTransactionResult(false)
+                  if (transactionResult.success) {
+                    handleClose() // Close the main modal on success
+                  }
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="space-y-4">
+              {transactionResult.success ? (
+                <>
+                  {/* Success Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Transaction Details */}
+                  <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+                    <div className="text-center mb-3">
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Liquidity Added</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {transactionResult.token0Symbol}/{transactionResult.token1Symbol} Pool
+                      </p>
+                    </div>
+                    
+                    {/* Added Amounts */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{transactionResult.token0Symbol} Added</div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-600 dark:text-green-400">Long:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount0Long || '0')}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-red-600 dark:text-red-400">Short:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount0Short || '0')}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{transactionResult.token1Symbol} Added</div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-600 dark:text-green-400">Long:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount1Long || '0')}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-red-600 dark:text-red-400">Short:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount1Short || '0')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {transactionResult.txHash && (
+                      <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400 text-sm">Transaction:</span>
+                          <a 
+                            href={`https://testnet.sonicscan.org/tx/${transactionResult.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-400 font-mono text-sm"
+                          >
+                            {transactionResult.txHash.slice(0, 6)}...{transactionResult.txHash.slice(-4)}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Error Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Error Details */}
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <p className="text-red-400 text-sm mb-2">Error:</p>
+                    <p className="text-white text-sm break-words">{transactionResult.error}</p>
+                  </div>
+                  
+                  {/* Attempted Transaction Details */}
+                  <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+                    <div className="text-center mb-3">
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Attempted to Add</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {transactionResult.token0Symbol}/{transactionResult.token1Symbol} Pool
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{transactionResult.token0Symbol}</div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-600 dark:text-green-400">Long:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount0Long || '0')}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-red-600 dark:text-red-400">Short:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount0Short || '0')}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{transactionResult.token1Symbol}</div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-600 dark:text-green-400">Long:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount1Long || '0')}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-red-600 dark:text-red-400">Short:</span>
+                            <span className="font-mono">{formatSafeNumber(transactionResult.amount1Short || '0')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            
+            {/* Close Button */}
+            <div className="mt-6">
+              <button
+                onClick={() => {
+                  setShowTransactionResult(false)
+                  if (transactionResult.success) {
+                    handleClose() // Close the main modal on success
+                  }
+                }}
+                className="cursor-pointer w-full py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-900 dark:text-white font-medium transition-colors cursor-pointer"
+              >
+                {transactionResult.success ? 'Done' : 'Try Again'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

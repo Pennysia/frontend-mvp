@@ -88,14 +88,32 @@ export function useLiquidity() {
       const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
       const allowance = await tokenContract.allowance(address, spenderAddress)
       
-      return ethers.parseUnits(amount, decimals) <= allowance
+      // Convert amount to BigInt for comparison
+      let amountInWei: bigint
+      try {
+        amountInWei = ethers.parseUnits(amount, decimals)
+      } catch (parseError) {
+        console.error('Error parsing amount:', { amount, decimals, error: parseError })
+        return false
+      }
+      
+      // Log for debugging
+      console.log('Allowance check:', {
+        tokenAddress,
+        spenderAddress,
+        amount: amountInWei.toString(),
+        allowance: allowance.toString(),
+        hasSufficientAllowance: allowance >= amountInWei
+      })
+      
+      return allowance >= amountInWei
     } catch (error) {
       console.error('Error checking allowance:', error)
       return false
     }
   }, [getProvider, address])
 
-  // Approve token spending
+  // Approve token spending with better error handling and confirmation
   const approveToken = useCallback(async (
     tokenAddress: string,
     spenderAddress: string,
@@ -106,24 +124,106 @@ export function useLiquidity() {
       const signer = await getSigner()
       if (!signer) throw new Error('No signer available')
 
+      // Validate addresses
+      if (!ethers.isAddress(tokenAddress)) {
+        throw new Error(`Invalid token address: ${tokenAddress}`)
+      }
+      if (!ethers.isAddress(spenderAddress)) {
+        throw new Error(`Invalid spender address: ${spenderAddress}`)
+      }
+
       const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
       
+      console.log(`🔍 Approving token ${tokenAddress} for spender ${spenderAddress}`)
+      
+      // Get current allowance to check if approval is needed
+      const userAddress = await signer.getAddress()
+      const currentAllowance = await tokenContract.allowance(userAddress, spenderAddress)
+      console.log(`📊 Current allowance: ${currentAllowance.toString()}`)
+      
       // Use maximum uint256 value for approval to avoid precision issues
-      // This is a common pattern used by many DeFi protocols
       const maxApproval = ethers.MaxUint256
       
-      console.log(`Approving token ${tokenAddress} for spender ${spenderAddress} with max allowance`)
+      // Check if we already have sufficient allowance
+      const requiredAmount = ethers.parseUnits(amount || '0', decimals)
+      if (currentAllowance >= requiredAmount) {
+        console.log('✅ Already has sufficient allowance, skipping approval')
+        return true
+      }
       
+      // 1. First, try to set allowance to 0 to reset any existing approval (for tokens like USDT)
+      try {
+        console.log('🔄 Resetting existing approval to 0...')
+        const resetTx = await tokenContract.approve(spenderAddress, 0)
+        const resetReceipt = await resetTx.wait()
+        console.log('✅ Reset approval to 0 confirmed:', resetReceipt.hash)
+      } catch (resetError) {
+        console.warn('⚠️ Could not reset approval to 0, continuing anyway:', resetError)
+        // Continue anyway - some tokens don't require reset
+      }
+      
+      // 2. Set new approval to max amount
+      console.log('🎯 Setting new approval to max...')
       const tx = await tokenContract.approve(spenderAddress, maxApproval)
-      console.log('Approval transaction sent:', tx.hash)
+      console.log('📤 Approval transaction sent:', tx.hash)
       
-      const receipt = await tx.wait()
-      console.log('Approval transaction confirmed:', receipt.hash)
+      // Wait for confirmation with timeout
+      const receipt = await Promise.race([
+        tx.wait(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Approval transaction timeout after 60 seconds')), 60000)
+        )
+      ]) as ethers.ContractTransactionReceipt
+      
+      if (!receipt) {
+        throw new Error('Approval transaction failed - no receipt received')
+      }
+      
+      if (!receipt.status || receipt.status === 0) {
+        throw new Error('Approval transaction failed - transaction reverted')
+      }
+      
+      console.log('✅ Approval transaction confirmed:', receipt.hash)
+      
+      // 3. Verify the new allowance
+      const newAllowance = await tokenContract.allowance(userAddress, spenderAddress)
+      console.log('📈 New allowance set to:', newAllowance.toString())
       
       return true
     } catch (error) {
-      console.error('Error approving token:', error)
-      throw error
+      // Enhanced error handling with detailed context
+      const errorDetails = {
+        tokenAddress,
+        spenderAddress,
+        amount,
+        decimals,
+        error: error instanceof Error ? {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        } : String(error),
+        timestamp: new Date().toISOString()
+      }
+      
+      console.error('❌ Error in approveToken:', errorDetails)
+      
+      // Provide user-friendly error message
+      let userMessage = 'Token approval failed'
+      if (error instanceof Error) {
+        if (error.message.includes('user rejected')) {
+          userMessage = 'Transaction was rejected by user'
+        } else if (error.message.includes('timeout')) {
+          userMessage = 'Transaction timed out - please try again'
+        } else if (error.message.includes('insufficient funds')) {
+          userMessage = 'Insufficient funds for transaction'
+        } else if (error.message.includes('Invalid token address')) {
+          userMessage = 'Invalid token address provided'
+        } else {
+          userMessage = error.message
+        }
+      }
+      
+      throw new Error(userMessage)
     }
   }, [getSigner])
 
@@ -424,10 +524,21 @@ export function useLiquidity() {
     token1Decimals: number = 18
   ) => {
     try {
+      console.log('🔄 Starting addLiquidity with params:', {
+        token0Address,
+        token1Address,
+        amount0Long,
+        amount0Short,
+        amount1Long,
+        amount1Short,
+        token0Decimals,
+        token1Decimals
+      })
+
       const signer = await getSigner()
       if (!signer) throw new Error('No signer available')
 
-      // Get Router address instead of Market address
+      // Get Router address
       const routerAddress = getRouterAddress(ChainId.SONIC_BLAZE_TESTNET)
       if (!routerAddress) throw new Error('Router contract not deployed')
 
@@ -436,11 +547,11 @@ export function useLiquidity() {
         throw new Error('Invalid token addresses provided')
       }
 
-      // Check and approve tokens if needed (approve Router, not Market)
-      const totalAmount0 = (parseFloat(amount0Long) + parseFloat(amount0Short)).toString()
-      const totalAmount1 = (parseFloat(amount1Long) + parseFloat(amount1Short)).toString()
+      // Calculate total amounts needed for approval
+      const totalAmount0 = (parseFloat(amount0Long) + parseFloat(amount0Short) || 0).toString()
+      const totalAmount1 = (parseFloat(amount1Long) + parseFloat(amount1Short) || 0).toString()
 
-      console.log('Token approval check:', {
+      console.log('🔍 Token approval check:', {
         token0Address,
         token1Address,
         routerAddress,
@@ -450,51 +561,42 @@ export function useLiquidity() {
         token1Decimals
       })
 
-      const [allowance0, allowance1] = await Promise.all([
-        checkTokenAllowance(token0Address, routerAddress, totalAmount0, token0Decimals),
-        checkTokenAllowance(token1Address, routerAddress, totalAmount1, token1Decimals)
+      // Always approve tokens (don't check allowance first to avoid race conditions)
+      console.log('🔄 Approving tokens...')
+      
+      // Approve both tokens in parallel
+      await Promise.all([
+        totalAmount0 > '0' ? approveToken(token0Address, routerAddress, totalAmount0, token0Decimals) : Promise.resolve(),
+        totalAmount1 > '0' ? approveToken(token1Address, routerAddress, totalAmount1, token1Decimals) : Promise.resolve()
       ])
 
-      console.log('Allowance check results:', { allowance0, allowance1 })
-
-      if (!allowance0) {
-        console.log('Approving token0...')
-        await approveToken(token0Address, routerAddress, totalAmount0, token0Decimals)
-        console.log('Token0 approved')
-      }
-      if (!allowance1) {
-        console.log('Approving token1...')
-        await approveToken(token1Address, routerAddress, totalAmount1, token1Decimals)
-        console.log('Token1 approved')
-      }
-
-      // Double-check allowances after approval
-      const [finalAllowance0, finalAllowance1] = await Promise.all([
-        checkTokenAllowance(token0Address, routerAddress, totalAmount0, token0Decimals),
-        checkTokenAllowance(token1Address, routerAddress, totalAmount1, token1Decimals)
-      ])
-
-      console.log('Final allowance check:', { finalAllowance0, finalAllowance1 })
-
-      if (!finalAllowance0 || !finalAllowance1) {
-        throw new Error(`Insufficient allowance after approval. Token0: ${finalAllowance0}, Token1: ${finalAllowance1}`)
-      }
+      console.log('✅ Token approvals completed')
 
       // Execute add liquidity using Router contract
       const routerContract = new ethers.Contract(routerAddress, ROUTER_ABI, signer)
       const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
       // Parse amounts with correct decimals
-      const parsedAmount0Long = ethers.parseUnits(amount0Long, token0Decimals)
-      const parsedAmount0Short = ethers.parseUnits(amount0Short, token0Decimals)
-      const parsedAmount1Long = ethers.parseUnits(amount1Long, token1Decimals)
-      const parsedAmount1Short = ethers.parseUnits(amount1Short, token1Decimals)
+      const parsedAmount0Long = ethers.parseUnits(amount0Long || '0', token0Decimals)
+      const parsedAmount0Short = ethers.parseUnits(amount0Short || '0', token0Decimals)
+      const parsedAmount1Long = ethers.parseUnits(amount1Long || '0', token1Decimals)
+      const parsedAmount1Short = ethers.parseUnits(amount1Short || '0', token1Decimals)
 
       // Set minimum amounts (90% of expected for slippage protection)
       const longXMinimum = 0n // Will be calculated by Router
       const shortXMinimum = 0n
       const longYMinimum = 0n
       const shortYMinimum = 0n
+
+      console.log('📝 Calling addLiquidity with:', {
+        token0Address,
+        token1Address,
+        parsedAmount0Long: parsedAmount0Long.toString(),
+        parsedAmount0Short: parsedAmount0Short.toString(),
+        parsedAmount1Long: parsedAmount1Long.toString(),
+        parsedAmount1Short: parsedAmount1Short.toString(),
+        deadline
+      })
 
       const tx = await routerContract.addLiquidity(
         token0Address,

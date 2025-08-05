@@ -5,7 +5,7 @@ export declare const PENNYSIA_CONSTANTS: {
     readonly MINIMUM_LIQUIDITY: 1000;
     readonly DEFAULT_DEADLINE_MINUTES: 20;
     readonly DEFAULT_DEADLINE_SECONDS: number;
-    readonly DEFAULT_SLIPPAGE_BPS: 200;
+    readonly DEFAULT_SLIPPAGE_BPS: 50;
     readonly HIGH_SLIPPAGE_BPS: 300;
     readonly GAS_LIMITS: {
         readonly SWAP: 200000;

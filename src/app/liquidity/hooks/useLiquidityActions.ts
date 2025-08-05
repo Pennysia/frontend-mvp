@@ -96,7 +96,7 @@ export function useLiquidityActions() {
         params.token1Decimals
       )
 
-      toast.success(`Liquidity added successfully! Transaction: ${txHash}`)
+      // Success notification now handled by AddLiquidityModal popup widget
       
       // Refresh positions with enhanced reliability
       console.log('🔄 Refreshing positions after liquidity addition...')
@@ -145,7 +145,8 @@ export function useLiquidityActions() {
         params.liquidity1Short
       )
 
-      toast.success(`Liquidity removed successfully! Transaction: ${txHash}`)
+      // toast.success(`Liquidity removed successfully! Transaction: ${txHash}`)
+      //Success notification now handled by RemoveLiquidityModal popup widget
       
       // Refresh positions with enhanced reliability
       console.log('🔄 Refreshing positions after liquidity removal...')

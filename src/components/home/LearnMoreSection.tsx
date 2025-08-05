@@ -42,8 +42,8 @@ export default function LearnMoreSection() {
                     <div className="bg-gray-200/50 dark:bg-[#555C6F]/10 backdrop-blur-sm rounded-2xl">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-end h-full w-full">
                             <div className="flex flex-col p-6 h-full w-full">
-                                <h3 className="text-2xl md:text-3xl font-normal text-[#2E2F46] dark:text-white mb-3">
-                                    Source Code
+                            <h3 className="text-xl md:text-2xl font-normal text-[#2E2F46] dark:text-white mb-3">
+                            Source Code
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                                     Open-source smart contracts and frontend implementations.
@@ -70,8 +70,8 @@ export default function LearnMoreSection() {
                 <div className="bg-gray-200/50 dark:bg-[#555C6F]/10 backdrop-blur-sm rounded-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-end h-full w-full">
                             <div className="flex flex-col p-6 h-full w-full">
-                                <h3 className="text-2xl md:text-3xl font-normal text-[#2E2F46] dark:text-white mb-3">
-                                    Contact Us
+                            <h3 className="text-xl md:text-2xl font-normal text-[#2E2F46] dark:text-white mb-3">
+                            Contact Us
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                                     Get in touch with our team for support and partnerships.

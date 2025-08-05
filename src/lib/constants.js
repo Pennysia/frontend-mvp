@@ -18,7 +18,7 @@ exports.PENNYSIA_CONSTANTS = {
     DEFAULT_DEADLINE_MINUTES: 20,
     DEFAULT_DEADLINE_SECONDS: 20 * 60,
     // Slippage defaults (in basis points)
-    DEFAULT_SLIPPAGE_BPS: 200, // 2.0%
+    DEFAULT_SLIPPAGE_BPS: 50, // 0.5%
     HIGH_SLIPPAGE_BPS: 300, // 3%
     // Gas limits (estimated)
     GAS_LIMITS: {
@@ -30,8 +30,8 @@ exports.PENNYSIA_CONSTANTS = {
     // Common addresses
     ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
     DEAD_ADDRESS: '0x000000000000000000000000000000000000dEaD',
-    MARKET_ADDRESS: '0x1b4C769a1E14C9dbB158da0b9E3e5A53826AA9F5',
-    ROUTER_ADDRESS: '0x91205B2C56bc078B5777Fc96919A6CA4f7BDc3C7', // TODO: Replace with actual Router contract address
+    MARKET_ADDRESS: '0xe3b11A98E34aA76e3F03F45dF63cce75C7ECcBdf',
+    ROUTER_ADDRESS: '0x5D22f0B1190268bA6f0da8e2b36523983dd4b1ae',
     // Precision
     PRECISION_DECIMALS: 18,
     MAX_UINT256: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',

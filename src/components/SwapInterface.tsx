@@ -5,9 +5,9 @@ import { ChevronDownIcon, ArrowsUpDownIcon, ExclamationTriangleIcon, XMarkIcon }
 import { usePrivy } from '@privy-io/react-auth'
 import { useWallets } from '@privy-io/react-auth'
 import { ethers } from 'ethers'
-import { 
-  PennysiaSDK, 
-  ChainId, 
+import {
+  PennysiaSDK,
+  ChainId,
   PENNYSIA_CONSTANTS,
   parseTokenAmount,
   formatTokenAmount,
@@ -64,7 +64,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
   // Add a ref to store the timeout ID
   const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   // Track which field is being actively edited to prevent loops
   const isUpdating = useRef({ input: false, output: false })
 
@@ -113,9 +113,9 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
     const shouldRefresh = () => {
       return (
-        inputAmount && 
-        selectedTokenA && 
-        selectedTokenB && 
+        inputAmount &&
+        selectedTokenA &&
+        selectedTokenB &&
         Number(inputAmount) > 0 &&
         !isCalculatingOutput &&
         !isSwapping
@@ -162,8 +162,8 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
   // Sort tokens to determine token0/token1 (lexicographic order)
   const sortTokens = (tokenA: Token, tokenB: Token): [Token, Token] => {
-    return tokenA.address.toLowerCase() < tokenB.address.toLowerCase() 
-      ? [tokenA, tokenB] 
+    return tokenA.address.toLowerCase() < tokenB.address.toLowerCase()
+      ? [tokenA, tokenB]
       : [tokenB, tokenA]
   }
 
@@ -173,40 +173,47 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     try {
       // Sort tokens to ensure token0 < token1 (lexicographic order)
       const [token0, token1] = sortTokens(tokenA, tokenB)
-      
+
+      let provider: ethers.Provider
       if (!isConnected || !wallets.length) {
-        // Use public RPC for read-only operations
-        if (!marketAddress) {
-          console.error("Market address not found for the current chain.");
-          return null;
-        }
-        const provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
-        const marketContract = new ethers.Contract(marketAddress, MARKET_ABI, provider)
-        
-        const [reserve0Long, reserve0Short, reserve1Long, reserve1Short] = await marketContract.getReserves(token0.address, token1.address)
-        
-        return {
-          reserve0: reserve0Long + reserve0Short, // Total reserve0 = Long + Short
-          reserve1: reserve1Long + reserve1Short  // Total reserve1 = Long + Short
-        }
+        provider = new ethers.JsonRpcProvider('https://rpc.blaze.soniclabs.com')
       } else {
-        // Use wallet provider
         const wallet = wallets[0]
-        const provider = await wallet.getEthereumProvider()
-        const ethersProvider = new ethers.BrowserProvider(provider)
-        const signer = await ethersProvider.getSigner()
-        if (!marketAddress) {
-          console.error("Market address not found for the current chain.");
-          return null;
-        }
-        const marketContract = new ethers.Contract(marketAddress, MARKET_ABI, signer)
-        
+        const ethersProvider = await wallet.getEthereumProvider()
+        provider = new ethers.BrowserProvider(ethersProvider)
+      }
+
+      if (!marketAddress) {
+        console.error("Market address not found for the current chain.");
+        return null;
+      }
+
+      const marketContract = new ethers.Contract(marketAddress, MARKET_ABI, provider)
+
+      try {
         const [reserve0Long, reserve0Short, reserve1Long, reserve1Short] = await marketContract.getReserves(token0.address, token1.address)
         
+        // Debug logging for reserves
+        console.log('🔍 RESERVES FETCHED:', {
+          token0: token0.symbol,
+          token1: token1.symbol,
+          reserve0Long: reserve0Long.toString(),
+          reserve0Short: reserve0Short.toString(),
+          reserve1Long: reserve1Long.toString(),
+          reserve1Short: reserve1Short.toString(),
+          totalReserve0: (reserve0Long + reserve0Short).toString(),
+          totalReserve1: (reserve1Long + reserve1Short).toString()
+        })
+
+        // Return actual available liquidity (Long positions only for swaps)
+        // Short positions represent borrowed tokens, not available for swaps
         return {
-          reserve0: reserve0Long + reserve0Short,
-          reserve1: reserve1Long + reserve1Short
+          reserve0: reserve0Long, // Only long positions are available for swaps
+          reserve1: reserve1Long  // Only long positions are available for swaps
         }
+      } catch (error) {
+        console.warn('Failed to fetch reserves:', error)
+        return null
       }
     } catch (error) {
       console.error('Error fetching pool reserves:', error)
@@ -246,34 +253,68 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       try {
         // Call Router's getAmountsOut function with path (same as swap execution)
         const path = [tokenIn.address, tokenOut.address]
+
+        // Debug logging for Router call
+        console.log('🔍 ROUTER CONTRACT CALL DEBUG:')
+        console.log('tokenIn:', tokenIn.symbol, tokenIn.address)
+        console.log('tokenOut:', tokenOut.symbol, tokenOut.address)
+        console.log('path:', path)
+        console.log('amountIn:', amountIn.toString())
+
         const amounts = await routerContract.getAmountsOut(amountIn, path)
         const amountOut = amounts[1] // Output amount is the second element
-        
+
+        console.log('Router amounts result:', amounts.map((a: any) => a.toString()))
+        console.log('Router amountOut:', amountOut.toString())
+
         return ethers.formatUnits(amountOut, tokenOut.decimals)
       } catch (contractError) {
         console.warn('Router contract call failed, using fallback calculation:', contractError)
-        
+
         // Fallback: Manual calculation with proper AMM formula including 0.3% fee
         const reserves = await getPoolReserves(tokenIn, tokenOut)
-        if (!reserves || reserves.reserve0 === 0n || reserves.reserve1 === 0n) {
-          return ''
+        
+        // More accurate liquidity check - allow small reserves but not zero
+        if (!reserves || reserves.reserve0 <= 0n || reserves.reserve1 <= 0n) {
+          console.warn('🔍 NO_LIQUIDITY detected - reserves too low:', reserves)
+          return 'NO_LIQUIDITY'
         }
 
         // Sort tokens to determine reserve order
         const [token0, token1] = sortTokens(tokenIn, tokenOut)
         const isToken0Input = tokenIn.address.toLowerCase() === token0.address.toLowerCase()
-        
+
         const reserveIn = isToken0Input ? reserves.reserve0 : reserves.reserve1
         const reserveOut = isToken0Input ? reserves.reserve1 : reserves.reserve0
 
-        // Apply 0.3% fee: amountInWithFee = amountIn * 997 / 1000
-        const amountInWithFee = amountIn * 997n / 1000n
-        
-        // Constant product formula: amountOut = (amountInWithFee * reserveOut) / (reserveIn + amountInWithFee)
+        // Debug logging
+        console.log('🔍 FALLBACK CALCULATION DEBUG:')
+        console.log('tokenIn:', tokenIn.symbol, tokenIn.address)
+        console.log('tokenOut:', tokenOut.symbol, tokenOut.address)
+        console.log('token0 (sorted):', token0.address)
+        console.log('token1 (sorted):', token1.address)
+        console.log('isToken0Input:', isToken0Input)
+        console.log('reserves.reserve0:', reserves.reserve0.toString())
+        console.log('reserves.reserve1:', reserves.reserve1.toString())
+        console.log('reserveIn (used):', reserveIn.toString())
+        console.log('reserveOut (used):', reserveOut.toString())
+        console.log('amountIn:', amountIn.toString())
+
+        // Check if input amount is too large relative to reserves
+        if (amountIn >= reserveIn) {
+          console.warn('🔍 Input amount exceeds available reserves')
+          return 'NO_LIQUIDITY'
+        }
+
+        // Proper constant product formula with 0.3% fee (Uniswap v2 style)
+        // amountOut = (amountIn * 997 * reserveOut) / (reserveIn * 1000 + amountIn * 997)
+        const amountInWithFee = amountIn * 997n
         const numerator = amountInWithFee * reserveOut
-        const denominator = reserveIn + amountInWithFee
+        const denominator = reserveIn * 1000n + amountInWithFee
         const amountOut = numerator / denominator
-        
+
+        console.log('calculated amountOut:', amountOut.toString())
+
         return ethers.formatUnits(amountOut, tokenOut.decimals)
       }
     } catch (error) {
@@ -321,7 +362,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
         // Sort tokens to determine reserve order
         const [token0, token1] = sortTokens(tokenIn, tokenOut)
-        
+
         // Match RouterLibrary.sol logic: (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0)
         const reserveIn = tokenIn.address.toLowerCase() === token0.address.toLowerCase() ? reserves.reserve0 : reserves.reserve1
         const reserveOut = tokenIn.address.toLowerCase() === token0.address.toLowerCase() ? reserves.reserve1 : reserves.reserve0
@@ -332,39 +373,40 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
           reserveIn,    // ✅ FIXED: Use reserve amounts
           reserveOut    // ✅ FIXED: Use reserve amounts
         )
-        
+
         return ethers.formatUnits(amountIn, tokenIn.decimals)
       } catch (contractError) {
         console.warn('Router contract call failed, using fallback calculation:', contractError)
-        
+
         // Fallback: Manual calculation with proper AMM formula including 0.3% fee
         const reserves = await getPoolReserves(tokenIn, tokenOut)
-        if (!reserves || reserves.reserve0 === 0n || reserves.reserve1 === 0n) {
-          return ''
+        
+        // More accurate liquidity check - allow small reserves but not zero
+        if (!reserves || reserves.reserve0 <= 0n || reserves.reserve1 <= 0n) {
+          console.warn('🔍 NO_LIQUIDITY detected - reserves too low:', reserves)
+          return 'NO_LIQUIDITY'
         }
 
         // Sort tokens to determine reserve order
         const [token0, token1] = sortTokens(tokenIn, tokenOut)
         const isToken0Input = tokenIn.address.toLowerCase() === token0.address.toLowerCase()
-        
+
         const reserveIn = isToken0Input ? reserves.reserve0 : reserves.reserve1
         const reserveOut = isToken0Input ? reserves.reserve1 : reserves.reserve0
 
-        // Reverse calculation from getAmountOut with 0.3% fee
-        // From: amountOut = (amountInWithFee * reserveOut) / (reserveIn + amountInWithFee)
-        // Where: amountInWithFee = amountIn * 997 / 1000
-        // Solve for amountIn: amountIn = (amountOut * reserveIn * 1000) / ((reserveOut - amountOut) * 997)
-        
-        // Check if amountOut exceeds available reserves
+        // Reverse calculation with proper fee handling
+        // Check if requested output exceeds available reserves
         if (amountOut >= reserveOut) {
-          console.error('Requested output amount exceeds available reserves')
-          return ''
+          console.error('🔍 Requested output amount exceeds available reserves')
+          return 'NO_LIQUIDITY'
         }
-        
+
+        // Proper constant product formula with 0.3% fee (Uniswap v2 style)
+        // amountIn = (amountOut * reserveIn * 1000) / ((reserveOut - amountOut) * 997)
         const numerator = amountOut * reserveIn * 1000n
         const denominator = (reserveOut - amountOut) * 997n
         const amountIn = numerator / denominator
-        
+
         return ethers.formatUnits(amountIn, tokenIn.decimals)
       }
     } catch (error) {
@@ -391,10 +433,10 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   // Handle input amount changes and calculate output
   const handleInputAmountChange = async (value: string) => {
     if (isUpdating.current.input) return // Prevent re-entry
-    
+
     setInputAmount(value)
     setActiveField('input')
-    
+
     if (!value || !selectedTokenA || !selectedTokenB || Number(value) <= 0) {
       setOutputAmount('')
       setSwapPrice('')
@@ -422,10 +464,10 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   // Handle output amount changes and calculate input
   const handleOutputAmountChange = (value: string) => {
     if (isUpdating.current.output) return // Prevent re-entry
-    
+
     setOutputAmount(value)
     setActiveField('output')
-    
+
     if (!value || !selectedTokenA || !selectedTokenB || Number(value) <= 0) {
       setInputAmount('')
       setSwapPrice('')
@@ -436,12 +478,12 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
     // Debounce the calculation to avoid interfering with typing
     setIsCalculatingInput(true)
-    
+
     // Clear any existing timeout
     if (calculationTimeoutRef.current) {
       clearTimeout(calculationTimeoutRef.current)
     }
-    
+
     // Set a new timeout for calculation
     calculationTimeoutRef.current = setTimeout(async () => {
       try {
@@ -469,22 +511,22 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   // Handle token switching
   const handleSwitchTokens = () => {
     if (!selectedTokenA || !selectedTokenB) return
-    
+
     // Store the current values
     const oldInput = inputAmount
     const oldOutput = outputAmount
-    
+
     // Switch tokens
     setSelectedTokenA(selectedTokenB)
     setSelectedTokenB(selectedTokenA)
-    
+
     // Swap the input and output amounts
     setInputAmount(oldOutput)
     setOutputAmount(oldInput)
-    
+
     // Force a recalculation by setting the active field to 'input'
     setActiveField('input')
-    
+
     // If there was an input amount, trigger a recalculation
     if (oldOutput) {
       handleInputAmountChange(oldOutput)
@@ -504,56 +546,56 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       return
     }
 
-  let isMounted = true
+    let isMounted = true
 
-  const calculateOutput = async () => {
-    try {
-      setIsCalculatingOutput(true)
-      const calculatedOutput = await calculateOutputAmount(inputAmount, selectedTokenA, selectedTokenB)
-      if (isMounted) {
-        setOutputAmount(calculatedOutput)
-        // Calculate and set the average swap price
-        setSwapPrice(calculateSwapPrice(inputAmount, calculatedOutput))
-      }
-    } catch (error: any) {
-      console.error('Error calculating output:', error)
-      // Fallback to mock calculation if contract call fails
+    const calculateOutput = async () => {
       try {
-        const inputAmountWei = parseTokenAmount(inputAmount, selectedTokenA.decimals)
-        const mockOutputWei = (BigInt(inputAmountWei) * BigInt(95) / BigInt(100)).toString()
-        const formattedOutput = formatTokenAmount(mockOutputWei, selectedTokenB.decimals)
+        setIsCalculatingOutput(true)
+        const calculatedOutput = await calculateOutputAmount(inputAmount, selectedTokenA, selectedTokenB)
         if (isMounted) {
-          setOutputAmount(formattedOutput)
-          setSwapPrice(calculateSwapPrice(inputAmount, formattedOutput))
+          setOutputAmount(calculatedOutput)
+          // Calculate and set the average swap price
+          setSwapPrice(calculateSwapPrice(inputAmount, calculatedOutput))
         }
-      } catch {
+      } catch (error: any) {
+        console.error('Error calculating output:', error)
+        // Fallback to mock calculation if contract call fails
+        try {
+          const inputAmountWei = parseTokenAmount(inputAmount, selectedTokenA.decimals)
+          const mockOutputWei = (BigInt(inputAmountWei) * BigInt(95) / BigInt(100)).toString()
+          const formattedOutput = formatTokenAmount(mockOutputWei, selectedTokenB.decimals)
+          if (isMounted) {
+            setOutputAmount(formattedOutput)
+            setSwapPrice(calculateSwapPrice(inputAmount, formattedOutput))
+          }
+        } catch {
+          if (isMounted) {
+            setOutputAmount('')
+            setSwapPrice('')
+          }
+        }
+      } finally {
         if (isMounted) {
-          setOutputAmount('')
-          setSwapPrice('')
+          setIsCalculatingOutput(false)
         }
-      }
-    } finally {
-      if (isMounted) {
-        setIsCalculatingOutput(false)
       }
     }
-  }
 
-  // Clear any existing timeout to prevent multiple executions
-  if (timeoutRef.current) {
-    clearTimeout(timeoutRef.current)
-  }
-
-  // Set new timeout
-  timeoutRef.current = setTimeout(calculateOutput, 100) // Debounce 300ms
-
-  return () => {
-    isMounted = false
+    // Clear any existing timeout to prevent multiple executions
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
-  }
-}, [inputAmount, selectedTokenA, selectedTokenB, sdk])
+
+    // Set new timeout
+    timeoutRef.current = setTimeout(calculateOutput, 100) // Debounce 300ms
+
+    return () => {
+      isMounted = false
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [inputAmount, selectedTokenA, selectedTokenB, sdk])
 
   const handleSwap = async () => {
     if (!isConnected || !selectedTokenA || !selectedTokenB || !inputAmount || !outputAmount) {
@@ -588,26 +630,26 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
       // Parse input amount
       const inputAmountWei = ethers.parseUnits(inputAmount, selectedTokenA.decimals)
-      
+
       // Create swap path
       const path = [selectedTokenA.address, selectedTokenB.address]
-      
+
       // Use the UI's outputAmount which is now calculated correctly using getAmountsOut
       console.log('🔍 Using UI calculated output amount (now correct)...')
       const expectedOutputWei = ethers.parseUnits(outputAmount, selectedTokenB.decimals)
-      
+
       console.log('✅ Expected output from UI:', {
         outputAmount,
         expectedOutputWei: expectedOutputWei.toString(),
         formatted: ethers.formatUnits(expectedOutputWei, selectedTokenB.decimals)
       })
-      
-      // Apply generous slippage tolerance to account for Market vs getAmountsOut discrepancy
-      // Use 5% slippage to provide buffer for contract calculation differences
-      const effectiveSlippage = Math.max(slippage, 5.0) // Minimum 5% slippage
+
+      // Apply more generous slippage tolerance to prevent reverts
+      // Use 10% slippage minimum to account for Market vs getAmountsOut discrepancy
+      const effectiveSlippage = Math.max(slippage, 10.0) // Minimum 10% slippage
       const slippageBps = Math.floor(effectiveSlippage * 100) // Convert to basis points
       const minOutputAmount = expectedOutputWei * BigInt(10000 - slippageBps) / BigInt(10000)
-      
+
       console.log('💱 Swap calculation details:', {
         inputAmount,
         expectedOutput: ethers.formatUnits(expectedOutputWei, selectedTokenB.decimals),
@@ -623,6 +665,9 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
       // Calculate deadline (15 minutes from now)
       const deadline = Math.floor(Date.now() / 1000) + PENNYSIA_CONSTANTS.DEFAULT_DEADLINE_SECONDS
+
+      // Declare swap transaction variable
+      let swapTx: any
 
       // Check if we need to approve tokens first
       const tokenContract = new ethers.Contract(
@@ -657,50 +702,55 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
           getAmountsOutPrediction: outputAmount,
           difference: ((BigInt(actualMarketOutput) - BigInt(expectedOutputWei)) * 100n / BigInt(expectedOutputWei)).toString() + '%'
         });
-        
-        // Use the actual market output for slippage calculation
-        const actualMinOutput = (BigInt(actualMarketOutput) * 95n) / 100n; // 5% slippage on actual output
+
+        // Use the actual market output for slippage calculation with more buffer
+        const actualMinOutput = (BigInt(actualMarketOutput) * 90n) / 100n; // 10% slippage on actual output
         console.log('📊 Using actual market output for slippage:', {
           actualMarketOutput: actualMarketOutput.toString(),
           slippageProtection: '5%',
           finalMinOutput: actualMinOutput.toString(),
           finalMinOutputFormatted: ethers.formatUnits(actualMinOutput, selectedTokenB.decimals)
         });
-        
-        // Execute swap with the corrected minimum output
-        const swapTx = await routerContract.swap(
+
+        // Execute swap with the corrected minimum output and higher gas limit
+        swapTx = await routerContract.swap(
           inputAmountWei,
           actualMinOutput.toString(),
           path,
           address,
-          deadline
+          deadline,
+          {
+            gasLimit: 300000 // Increase gas limit to prevent out-of-gas reverts
+          }
         );
       } catch (simulationError) {
         console.error('❌ Swap simulation failed:', simulationError);
         const errorMessage = simulationError instanceof Error ? simulationError.message : String(simulationError);
         throw new Error(`Swap simulation failed: ${errorMessage}`);
       }
-      
+
       // If simulation succeeded, execute the actual swap
-      const swapTx = await routerContract.swap(
-        inputAmountWei,
-        actualMarketOutput ? ((BigInt(actualMarketOutput) * 95n) / 100n).toString() : minOutputAmount,
-        path,
-        address,
-        deadline
-      )
+      if (!actualMarketOutput) {
+        swapTx = await routerContract.swap(
+          inputAmountWei,
+          minOutputAmount,
+          path,
+          address,
+          deadline
+        )
+      }
 
       // Wait for transaction confirmation
       const receipt = await swapTx.wait()
-      
+
       if (receipt.status === 1) {
         // Get the actual amount received from the swap transaction
         let actualAmountOut = outputAmount;
-        
+
         try {
           // Create interface using the actual Market ABI
           const marketInterface = new ethers.Interface(MARKET_ABI);
-          
+
           // Parse all logs to find the Swap event from Market contract
           for (const log of receipt.logs || []) {
             try {
@@ -732,7 +782,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
           tokenOutSymbol: selectedTokenB.symbol
         })
         setShowTransactionResult(true)
-        
+
         // Clear form
         setInputAmount('')
         setOutputAmount('')
@@ -743,7 +793,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
     } catch (error: any) {
       console.error('Swap error:', error)
-      
+
       // Show error result
       setTransactionResult({
         success: false,
@@ -765,18 +815,18 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       setShowTokenSelectorA(false)
       return
     }
-    
+
     if (selectedTokenB && token.address === selectedTokenB.address) {
       toast.error('Cannot select the same token for both positions')
       return
     }
-    
+
     // Create a new token object with the balance from the selected token
     const tokenWithBalance = {
       ...token,
       balance: token.balance || '0.00'
     }
-    
+
     setSelectedTokenA(tokenWithBalance)
     setShowTokenSelectorA(false)
   }
@@ -787,18 +837,18 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       setShowTokenSelectorB(false)
       return
     }
-    
+
     if (selectedTokenA && token.address === selectedTokenA.address) {
       toast.error('Cannot select the same token for both positions')
       return
     }
-    
+
     // Create a new token object with the balance from the selected token
     const tokenWithBalance = {
       ...token,
       balance: token.balance || '0.00'
     }
-    
+
     setSelectedTokenB(tokenWithBalance)
     setShowTokenSelectorB(false)
   }
@@ -844,212 +894,224 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
     <>
       <div className={clsx('relative dark:bg-[var(--background)] backdrop-blur-sm rounded-2xl border border-gray-800 p-4 w-full max-w-md mx-auto', className)}>
         {/* Input Token */}
-      <div className="space-y-2 mb-2">
-        <div className="relative bg-gray-200/50 dark:bg-gray-800/30 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">You pay</span>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-400">
-                Balance: {selectedTokenA ? (selectedTokenA.balance || '0.00') : '0.00'}
-              </span>
-              {selectedTokenA?.balance && parseFloat(selectedTokenA.balance) > 0 && (
-                <button 
-                  onClick={() => {
-                    const maxAmount = selectedTokenA.balance || '0';
-                    setInputAmount(maxAmount);
-                    handleInputAmountChange(maxAmount);
-                  }}
-                  className="text-xs text-purple-400 hover:text-purple-300"
-                  disabled={isSwapping || isCalculatingInput || isCalculatingOutput}
+        <div className="space-y-2 mb-2">
+          <div className="relative bg-gray-200/50 dark:bg-gray-800/30 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-400">You pay</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-400">
+                  Balance: {selectedTokenA ? (selectedTokenA.balance || '0.00') : '0.00'}
+                </span>
+                {selectedTokenA?.balance && parseFloat(selectedTokenA.balance) > 0 && (
+                  <button
+                    onClick={() => {
+                      const maxAmount = selectedTokenA.balance || '0';
+                      setInputAmount(maxAmount);
+                      handleInputAmountChange(maxAmount);
+                    }}
+                    className="text-xs text-purple-400 hover:text-purple-300"
+                    disabled={isSwapping || isCalculatingInput || isCalculatingOutput}
+                  >
+                    Max
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={isCalculatingInput && activeField !== 'input' ? 'Calculating...' : inputAmount}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // Only allow numbers, decimal point, and prevent negative values
+                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleInputAmountChange(value)
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Prevent 'e', 'E', '+', '-' keys
+                  if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="0.0"
+                className="flex-1 bg-transparent text-xl sm:text-2xl font-semibold placeholder-gray-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-w-0"
+              />
+              <div className="flex-shrink-0">
+                <button
+                  onClick={handleTokenSelectorAClick}
+                  className="cursor-pointer flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 w-[120px]"
                 >
-                  Max
+                  <div className="flex items-center space-x-2">
+                    {selectedTokenA ? (
+                      <>
+                        {selectedTokenA.logoURI ? (
+                          <img
+                            src={selectedTokenA.logoURI}
+                            alt={selectedTokenA.symbol}
+                            className="w-6 h-6 rounded-full"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                              if (fallback) fallback.style.display = 'flex'
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs ${selectedTokenA.logoURI ? 'hidden' : 'flex'
+                            }`}
+                        >
+                          {selectedTokenA.symbol[0]}
+                        </div>
+                        <span className="font-semibold text-sm">{selectedTokenA.symbol}</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-500 font-normal text-xs">Select Token</span>
+                    )}
+                  </div>
+                  <ChevronDownIcon className="h-4 w-4 text-gray-800 dark:text-gray-400" />
                 </button>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={isCalculatingInput && activeField !== 'input' ? 'Calculating...' : inputAmount}
-              onChange={(e) => {
-                const value = e.target.value
-                // Only allow numbers, decimal point, and prevent negative values
-                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                  handleInputAmountChange(value)
-                }
-              }}
-              onKeyDown={(e) => {
-                // Prevent 'e', 'E', '+', '-' keys
-                if (['e', 'E', '+', '-'].includes(e.key)) {
-                  e.preventDefault()
-                }
-              }}
-              placeholder="0.0"
-              className="flex-1 bg-transparent text-xl sm:text-2xl font-semibold placeholder-gray-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-w-0"
-            />
-            <div className="flex-shrink-0">
-              <button
-                onClick={handleTokenSelectorAClick}
-                className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 w-[120px]"
-              >
-                <div className="flex items-center space-x-2">
-                  {selectedTokenA ? (
-                    <>
-                      {selectedTokenA.logoURI ? (
-                        <img
-                          src={selectedTokenA.logoURI}
-                          alt={selectedTokenA.symbol}
-                          className="w-6 h-6 rounded-full"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                            const fallback = e.currentTarget.nextElementSibling as HTMLElement
-                            if (fallback) fallback.style.display = 'flex'
-                          }}
-                        />
-                      ) : null}
-                      <div 
-                        className={`w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs ${
-                          selectedTokenA.logoURI ? 'hidden' : 'flex'
-                        }`}
-                      >
-                        {selectedTokenA.symbol[0]}
-                      </div>
-                      <span className="font-semibold text-sm">{selectedTokenA.symbol}</span>
-                    </>
-                  ) : (
-                    <span className="text-gray-500 font-normal text-xs">Select Token</span>
-                  )}
-                </div>
-                <ChevronDownIcon className="h-4 w-4 text-gray-800 dark:text-gray-400" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Switch tokens button */}
-        <button
-          onClick={handleSwitchTokens}
-          className="border border-white dark:border-gray-600 absolute left-1/2 -translate-x-1/2 -translate-y-2/3 z-10 p-2 rounded-xl dark:bg-[var(--background)] bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors"
-        >
-          <ArrowsUpDownIcon className="h-5 w-5 text-gray-500" />
-        </button>
-
-        {/* Output Token */}
-        <div className="relative bg-gray-200/50 dark:bg-gray-800/30 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">You receive</span>
-            <span className="text-sm text-gray-400">
-              Balance: {selectedTokenB ? (selectedTokenB.balance || '0.00') : '0.00'}
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={isCalculatingOutput && activeField !== 'output' ? 'Calculating...' : outputAmount}
-              onChange={(e) => {
-                const value = e.target.value
-                // Only allow numbers, decimal point, and prevent negative values
-                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                  handleOutputAmountChange(value)
-                }
-              }}
-              onKeyDown={(e) => {
-                // Prevent 'e', 'E', '+', '-' keys
-                if (['e', 'E', '+', '-'].includes(e.key)) {
-                  e.preventDefault()
-                }
-              }}
-              placeholder="0.0"
-              className="flex-1 bg-transparent text-xl sm:text-2xl font-semibold placeholder-gray-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-w-0"
-              disabled={isCalculatingOutput}
-            />
-            <div className="flex-shrink-0">
-              <button
-                onClick={handleTokenSelectorBClick}
-                className="flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800  hover:bg-gray-300 dark:hover:bg-gray-600 w-[120px]"
-              >
-                <div className="flex items-center space-x-2">
-                  {selectedTokenB ? (
-                    <>
-                      {selectedTokenB.logoURI ? (
-                        <img
-                          src={selectedTokenB.logoURI}
-                          alt={selectedTokenB.symbol}
-                          className="w-6 h-6 rounded-full"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                            const fallback = e.currentTarget.nextElementSibling as HTMLElement
-                            if (fallback) fallback.style.display = 'flex'
-                          }}
-                        />
-                      ) : null}
-                      <div 
-                        className={`w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs ${
-                          selectedTokenB.logoURI ? 'hidden' : 'flex'
-                        }`}
-                      >
-                        {selectedTokenB.symbol[0]}
-                      </div>
-                      <span className="font-semibold text-sm">{selectedTokenB.symbol}</span>
-                    </>
-                  ) : (
-                    <span className="text-gray-500 font-normal text-xs">Select Token</span>
-                  )}
-                </div>
-                <ChevronDownIcon className="h-4 w-4 text-gray-800 dark:text-gray-400" />
-              </button>
+              </div>
             </div>
           </div>
 
+          {/* Switch tokens button */}
+          <button
+            onClick={handleSwitchTokens}
+            className="cursor-pointer border border-white dark:border-gray-600 absolute left-1/2 -translate-x-1/2 -translate-y-2/3 z-10 p-2 rounded-xl dark:bg-[var(--background)] bg-gray-200 hover:bg-gray-300 dark:hover:bg-gray-800 transition-colors"
+          >
+            <ArrowsUpDownIcon className="h-5 w-5 text-gray-500" />
+          </button>
 
-        </div>
-      </div>
+          {/* Output Token */}
+          <div className="relative bg-gray-200/50 dark:bg-gray-800/30 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-400">You receive</span>
+              <span className="text-sm text-gray-400">
+                Balance: {selectedTokenB ? (selectedTokenB.balance || '0.00') : '0.00'}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={isCalculatingOutput && activeField !== 'output' ? 'Calculating...' : outputAmount === 'NO_LIQUIDITY' ? 'No liquidity available' : outputAmount}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // Only allow numbers, decimal point, and prevent negative values
+                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleOutputAmountChange(value)
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Prevent 'e', 'E', '+', '-' keys
+                  if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault()
+                  }
+                }}
+                placeholder="0.0"
+                className="flex-1 bg-transparent text-xl sm:text-2xl font-semibold placeholder-gray-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none min-w-0"
+                disabled={isCalculatingOutput}
+              />
+              <div className="flex-shrink-0">
+                <button
+                  onClick={handleTokenSelectorBClick}
+                  className="cursor-pointer flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-white dark:bg-gray-800  hover:bg-gray-300 dark:hover:bg-gray-600 w-[120px]"
+                >
+                  <div className="flex items-center space-x-2">
+                    {selectedTokenB ? (
+                      <>
+                        {selectedTokenB.logoURI ? (
+                          <img
+                            src={selectedTokenB.logoURI}
+                            alt={selectedTokenB.symbol}
+                            className="w-6 h-6 rounded-full"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement
+                              if (fallback) fallback.style.display = 'flex'
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs ${selectedTokenB.logoURI ? 'hidden' : 'flex'
+                            }`}
+                        >
+                          {selectedTokenB.symbol[0]}
+                        </div>
+                        <span className="font-semibold text-sm">{selectedTokenB.symbol}</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-500 font-normal text-xs">Select Token</span>
+                    )}
+                  </div>
+                  <ChevronDownIcon className="h-4 w-4 text-gray-800 dark:text-gray-400" />
+                </button>
+              </div>
+            </div>
 
-      {/* Price Impact Warning */}
-      {swapPrice && (
-        <div className=" p-3 rounded-lg space-y-1">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400 font-light text-xs">Average Price:</span>
-            <span className="text-gray-900 dark:text-gray-200 font-light text-xs">
-              1 {selectedTokenA?.symbol} = {swapPrice} {selectedTokenB?.symbol}
-            </span>
+
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400 font-light text-xs">Inverse Price:</span>
-            <span className="text-gray-900 dark:text-gray-200 font-light text-xs">
-              1 {selectedTokenB?.symbol} = {(1 / parseFloat(swapPrice) || 0).toFixed(6)} {selectedTokenA?.symbol}
-            </span>
-          </div>
         </div>
-      )}
 
-      {/* Swap Button */}
-      <button
-        onClick={!isConnected ? login : handleSwap}
-        disabled={isConnected && (!inputAmount || !outputAmount || isSwapping || isCalculatingInput || isCalculatingOutput)}
-        className={clsx(
-          'w-full py-3 px-4 rounded-xl text-white font-medium transition-all',
-          'focus:outline-none focus:ring-opacity-50',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          'flex items-center justify-center space-x-2',
-          'border-2',
-          !isConnected
-            ? 'border-transparent bg-blue-500 hover:bg-blue-600'
-            : !inputAmount || !outputAmount || isSwapping
-            ? 'border-gray-600 bg-gray-700 cursor-not-allowed'
-            : 'border-purple-500 bg-purple-500 hover:bg-purple-500/20 hover:text-purple-500 focus:ring-2 focus:ring-purple-500'
+        {/* Price Impact Warning */}
+        {swapPrice && (
+          <div className=" p-3 rounded-lg space-y-1">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400 font-light text-xs">Average Price:</span>
+              <span className="text-gray-900 dark:text-gray-200 font-light text-xs">
+                1 {selectedTokenA?.symbol} = {swapPrice} {selectedTokenB?.symbol}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400 font-light text-xs">Inverse Price:</span>
+              <span className="text-gray-900 dark:text-gray-200 font-light text-xs">
+                1 {selectedTokenB?.symbol} = {(1 / parseFloat(swapPrice) || 0).toFixed(6)} {selectedTokenA?.symbol}
+              </span>
+            </div>
+          </div>
         )}
-      >
-        {!isConnected
-          ? 'Connect Wallet'
-          : isSwapping
-            ? 'Swapping...'
-            : (isCalculatingOutput || isCalculatingInput)
-              ? 'Calculating...'
-              : 'Swap'}
-      </button>
+
+        {/* No Liquidity Warning */}
+        {selectedTokenA && selectedTokenB && outputAmount === 'NO_LIQUIDITY' && (
+          <div className="bg-[var(--background)] dark:bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-center space-x-3 my-4">
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-yellow-400 font-medium text-sm">No Liquidity Available</p>
+              <p className="text-yellow-300/80 text-xs mt-1">
+                There is no liquidity pool for {selectedTokenA.symbol}/{selectedTokenB.symbol}.
+                Consider adding liquidity first or try a different token pair.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Swap Button */}
+        <button
+          onClick={!isConnected ? login : handleSwap}
+          disabled={isConnected && (!inputAmount || !outputAmount || outputAmount === 'NO_LIQUIDITY' || isSwapping || isCalculatingInput || isCalculatingOutput)}
+          className={clsx(
+            'w-full py-3 px-4 rounded-xl text-white font-medium transition-all',
+            'focus:outline-none focus:ring-opacity-50',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-700 disabled:hover:text-white disabled:hover:border-gray-600',
+            'flex items-center justify-center space-x-2',
+            'border-2',
+            !isConnected
+              ? 'border-transparent bg-blue-500 hover:bg-blue-600'
+              : !inputAmount || !outputAmount || outputAmount === 'NO_LIQUIDITY' || isSwapping
+                ? 'border-gray-600 bg-gray-700 cursor-not-allowed'
+                : 'border-purple-500 bg-purple-500 hover:bg-purple-500/20 hover:text-purple-500 focus:ring-2 focus:ring-purple-500'
+          )}
+        >
+          {!isConnected
+            ? 'Connect Wallet'
+            : isSwapping
+              ? 'Swapping...'
+              : (isCalculatingOutput || isCalculatingInput)
+                ? 'Calculating...'
+                : 'Swap'}
+        </button>
       </div>
 
       {/* Token Selector Modals */}
@@ -1060,7 +1122,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         title="Select a token to pay"
         excludeToken={selectedTokenB}
       />
-      
+
       <TokenSelectorModal
         isOpen={showTokenSelectorB}
         onClose={() => setShowTokenSelectorB(false)}
@@ -1068,14 +1130,14 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         title="Select a token to receive"
         excludeToken={selectedTokenA}
       />
-      
+
       {/* Transaction Loading Overlay */}
-      <TransactionLoadingOverlay 
+      <TransactionLoadingOverlay
         isVisible={isSwapping}
         title="Processing Swap..."
         subtitle="Please confirm the transaction in your wallet"
       />
-      
+
       {/* Transaction Result Modal */}
       {showTransactionResult && transactionResult && (
         <div className="fixed top-0 left-0 right-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ bottom: '80px' }}>
@@ -1094,7 +1156,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
                   <XMarkIcon className="h-5 w-5 text-gray-400" />
                 </button>
               </div>
-              
+
               {/* Content */}
               <div className="space-y-4">
                 {transactionResult.success ? (
@@ -1107,7 +1169,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
                         </svg>
                       </div>
                     </div>
-                    
+
                     {/* Transaction Details */}
                     <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
                       <div className="flex justify-between">
@@ -1125,7 +1187,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
                       {transactionResult.txHash && (
                         <div className="flex justify-between">
                           <span className="text-gray-400">Transaction:</span>
-                          <a 
+                          <a
                             href={`https://testnet.sonicscan.org/tx/${transactionResult.txHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -1135,23 +1197,6 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
                           </a>
                         </div>
                       )}
-                    </div>
-                    
-                    {/* Test Content for Scrolling - Remove this in production */}
-                    <div className="bg-gray-700/30 rounded-lg p-4 mt-4">
-                      <p className="text-gray-400 text-sm mb-2">Additional Details:</p>
-                      <div className="space-y-2 text-xs text-gray-300">
-                        <p>• Gas Used: 150,000</p>
-                        <p>• Gas Price: 20 gwei</p>
-                        <p>• Block Number: #1,234,567</p>
-                        <p>• Network: Sonic Testnet</p>
-                        <p>• Confirmation Time: ~3 seconds</p>
-                        <p>• Price Impact: 0.12%</p>
-                        <p>• Slippage Tolerance: 5.0%</p>
-                        <p>• Route: Direct Swap</p>
-                        <p>• Pool Fee: 0.3%</p>
-                        <p>• Minimum Received: Guaranteed</p>
-                      </div>
                     </div>
                   </>
                 ) : (
@@ -1164,13 +1209,13 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
                         </svg>
                       </div>
                     </div>
-                    
+
                     {/* Error Details */}
                     <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                       <p className="text-red-400 text-sm mb-2">Error:</p>
                       <p className="text-white text-sm break-words">{transactionResult.error}</p>
                     </div>
-                    
+
                     {/* Attempted Transaction Details */}
                     <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
                       <div className="flex justify-between">
@@ -1190,7 +1235,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
                 )}
               </div>
             </div>
-            
+
             {/* Fixed Close Button */}
             <div className="border-t border-gray-700 p-4">
               <button

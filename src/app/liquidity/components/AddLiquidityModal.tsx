@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { XMarkIcon, ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import TokenSelectorModal from '../../../components/TokenSelectorModal'
-import DirectionSlider from './DirectionSlider'
 import { useLiquidity } from '../hooks/useLiquidity'
 import { useLiquidityActions } from '../hooks/useLiquidityActions'
 import { useScrollLock } from '../hooks/useScrollLock'
@@ -91,7 +90,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   useScrollLock(isOpen)
   
   // Smart number formatting with appropriate precision
-  const formatSafeNumber = (value: string | number, decimals: number = 18): string => {
+  const formatSafeNumber = (value: string | number): string => {
     try {
       if (!value || value === '0' || value === 0) {
         return '0'
@@ -337,7 +336,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     } else {
       setCalculatedPrice(null)
     }
-  }, [selectedTokenA, selectedTokenB, amountA, amountB])
+  }, [selectedTokenA, selectedTokenB, amountA, amountB, calculateDecimalAwarePrice])
 
   // Fetch token balances when tokens are selected
   useEffect(() => {
@@ -384,7 +383,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       setPoolReserves(null)
       setIsLoadingPoolData(false)
     }
-  }, [selectedTokenA, selectedTokenB])
+  }, [selectedTokenA, selectedTokenB, checkPoolExistence])
 
   // Handle liquidity submission
   const handleLiquiditySubmission = async () => {
@@ -942,8 +941,8 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
 
     // TODO: Calculate actual LP tokens using quoteLiquidity from Router
     // For now, use placeholder calculations
-    const estimatedLongLP = (amountALong + amountBLong) * 0.1
-    const estimatedShortLP = (amountAShort + amountBShort) * 0.1
+    // const estimatedLongLP = (amountALong + amountBLong) * 0.1
+    // const estimatedShortLP = (amountAShort + amountBShort) * 0.1
 
     return (
       <div className="space-y-6">

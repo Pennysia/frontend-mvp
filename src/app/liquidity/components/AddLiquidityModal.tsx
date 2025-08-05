@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { XMarkIcon, ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import TokenSelectorModal from '../../../components/TokenSelectorModal'
 import { useLiquidity } from '../hooks/useLiquidity'
@@ -216,7 +216,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   }
 
   // Calculate decimal-aware price for new pools
-  const calculateDecimalAwarePrice = () => {
+  const calculateDecimalAwarePrice = useCallback(() => {
     if (!selectedTokenA || !selectedTokenB || !amountA || !amountB) {
       setCalculatedPrice(null)
       return
@@ -244,10 +244,10 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       console.error('Error calculating decimal-aware price:', error)
       setCalculatedPrice(null)
     }
-  }
+  }, [selectedTokenA, selectedTokenB, amountA, amountB])
 
   // Direct pool detection using getReserves() - simplified approach
-  const checkPoolExistence = async () => {
+  const checkPoolExistence = useCallback(async () => {
     if (!selectedTokenA || !selectedTokenB) {
       setPoolReserves(null)
       setIsLoadingPoolData(false)
@@ -296,8 +296,8 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         
         // Pool exists if any reserves > 0
         poolExists = reserve0Long > 0n || reserve0Short > 0n || reserve1Long > 0n || reserve1Short > 0n
-      } catch (error: any) {
-        console.log('📝 Pool does not exist yet (getReserves failed):', error?.message || 'Unknown error')
+      } catch (error: unknown) {
+        console.log('📝 Pool does not exist yet (getReserves failed):', error instanceof Error ? error.message : 'Unknown error')
         // Pool doesn't exist - all reserves remain 0n, poolExists remains false
         poolExists = false
       }
@@ -327,7 +327,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     } finally {
       setIsLoadingPoolData(false)
     }
-  }
+  }, [selectedTokenA, selectedTokenB])
 
   // Calculate decimal-aware price when tokens and amounts change
   useEffect(() => {
@@ -694,7 +694,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
               type="number"
               value={amountA}
               onChange={(e) => {
-                let value = e.target.value
+                const value = e.target.value
                 // Prevent negative amounts
                 const numValue = Number(value)
                 if (numValue < 0) {
@@ -821,7 +821,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
               type="number"
               value={amountB}
               onChange={(e) => {
-                let value = e.target.value
+                const value = e.target.value
                 // Prevent negative amounts
                 const numValue = Number(value)
                 if (numValue < 0) {

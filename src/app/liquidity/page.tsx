@@ -25,7 +25,7 @@ export default function LiquidityPage() {
 
   if (!ready) {
     return (
-      <div className="pt-20 md:pt-24 min-h-screen bg-gray-50 dark:bg-[var(--background)] pb-20">
+      <div className="pt-24 min-h-screen bg-gray-50 dark:bg-[var(--background)] pb-20">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
@@ -35,8 +35,8 @@ export default function LiquidityPage() {
   }
 
   return (
-    <div className="pt-20 md:pt-24 min-h-screen bg-gray-50 dark:bg-[var(--background)] pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+    <div className="pt-24 min-h-screen bg-gray-50 dark:bg-[var(--background)] pb-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         {/* Page Header
         <div className="mb-6 space-y-2">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white ">Overview</h1>
@@ -50,13 +50,13 @@ export default function LiquidityPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           {/* Your Liquidity Position - Takes 2/3 on large screens */}
           <div className="lg:col-span-3">
-            <div className="p-2 text-sm transition-colors duration-300">
+            <div className="text-sm transition-colors duration-300">
               <div className="flex items-left md:items-center justify-between mb-6 flex-col md:flex-row w-full gap-4">
-                <div className="flex flex-col items-left gap-4 p-2">
-                  <h2 className="text-3xl md:text-4xl font-base text-gray-900 dark:text-white transition-colors duration-300">Your Positions</h2>
-                  <p className="font-light text-base text-gray-600 dark:text-gray-400">Provide liquidity to earn fees and rewards from trading activity</p>
+                <div className="flex flex-col items-left gap-2">
+                  <h2 className="text-2xl md:text-3xl font-normal text-gray-900 dark:text-white transition-colors duration-300">Your Positions</h2>
+                  <p className="font-light text-sm text-gray-600 dark:text-gray-400">Provide liquidity to earn fees and rewards from trading activity</p>
                 </div>
-                <div className="flex space-x-3 px-2">
+                <div className="flex space-x-3">
                   <button
                     onClick={() => setShowImportPositionModal(true)}
                     className="w-full md:w-auto px-4 py-3 bg-transparent dark:bg-transparent border border-gray-600 dark:border-gray-400 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors hover:bg-gray-300 dark:hover:bg-gray-400 hover:cursor-pointer"

@@ -50,7 +50,7 @@ function TechnologySection() {
           </div>
           <div className="flex flex-col w-full h-full justify-center md:justify-start pointer-events-none ">
             <Image
-              src="/homePage/h2.svg"
+              src="/homePage/h3.svg"
               alt="Trade Tokens"
               width={500}
               height={500}
@@ -170,7 +170,7 @@ function TechnologySection() {
             <div className="flex justify-center md:justify-start pointer-events-none">
               <div className="flex flex-col w-full h-full justify-center md:justify-start pointer-events-none ">
                 <Image
-                  src="/homePage/h3.svg"
+                  src="/homePage/h2.svg"
                   alt="Integrate Oracle"
                   width={500}
                   height={500}

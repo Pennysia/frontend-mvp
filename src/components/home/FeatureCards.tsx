@@ -11,7 +11,7 @@ function FeatureCards() {
             </h3>
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 px-4 sm:px-0">
                 {/* Card 1 */}
-                <div className="p-6 bg-transparent rounded-2xl text-left border border-gray-300 dark:border-gray-800">
+                <div className="p-6 bg-white dark:bg-[#555C6F]/10 backdrop-blur-sm rounded-2xl text-left border border-gray-300 dark:border-gray-800">
                     <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
                         <div className="w-full h-50 my-8 flex items-center justify-center transform-gpu">
                             <Image
@@ -38,7 +38,7 @@ function FeatureCards() {
                 </div>
 
                 {/* Card 2 */}
-                <div className="p-6 bg-transparent rounded-2xl text-left border border-gray-300 dark:border-gray-800">
+                <div className="p-6 bg-white dark:bg-[#555C6F]/10 backdrop-blur-sm rounded-2xl text-left border border-gray-300 dark:border-gray-800">
                     <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
                         <div className="w-full h-auto mx-auto my-8 flex items-center justify-center transform-gpu">
                             <Image
@@ -66,7 +66,7 @@ function FeatureCards() {
                 </div>
 
                 {/* Card 3 */}
-                <div className="p-6 bg-transparent rounded-2xl text-left border border-gray-300 dark:border-gray-800">
+                <div className="p-6 bg-white dark:bg-[#555C6F]/10 backdrop-blur-sm rounded-2xl text-left border border-gray-300 dark:border-gray-800">
                     <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">
                         <div className="w-full h-auto mx-auto my-8 flex items-center justify-center transform-gpu">
                             <Image

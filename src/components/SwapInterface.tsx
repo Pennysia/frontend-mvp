@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDownIcon, ArrowsUpDownIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, ArrowsUpDownIcon, ExclamationTriangleIcon, XMarkIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { usePrivy } from '@privy-io/react-auth'
 import { useWallets } from '@privy-io/react-auth'
 import { ethers } from 'ethers'
@@ -38,6 +38,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   const [selectedTokenA, setSelectedTokenA] = useState<Token | null>(null)
   const [selectedTokenB, setSelectedTokenB] = useState<Token | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const settingsRef = useRef<HTMLDivElement>(null)
   const [inputAmount, setInputAmount] = useState('')
   const [outputAmount, setOutputAmount] = useState('')
   const [isCalculatingOutput, setIsCalculatingOutput] = useState(false) // When typing in "You Pay"
@@ -150,6 +151,23 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       }
     }
   }, [inputAmount, selectedTokenA, selectedTokenB, isCalculatingOutput, isSwapping])
+
+  // Handle click outside settings dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setShowSettings(false)
+      }
+    }
+
+    if (showSettings) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSettings])
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -644,9 +662,8 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         formatted: ethers.formatUnits(expectedOutputWei, selectedTokenB.decimals)
       })
 
-      // Apply more generous slippage tolerance to prevent reverts
-      // Use 10% slippage minimum to account for Market vs getAmountsOut discrepancy
-      const effectiveSlippage = Math.max(slippage, 10.0) // Minimum 10% slippage
+      // Apply user's slippage tolerance setting
+      const effectiveSlippage = slippage // Use user's slippage setting directly
       const slippageBps = Math.floor(effectiveSlippage * 100) // Convert to basis points
       const minOutputAmount = expectedOutputWei * BigInt(10000 - slippageBps) / BigInt(10000)
 
@@ -703,11 +720,13 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
           difference: ((BigInt(actualMarketOutput) - BigInt(expectedOutputWei)) * 100n / BigInt(expectedOutputWei)).toString() + '%'
         });
 
-        // Use the actual market output for slippage calculation with more buffer
-        const actualMinOutput = (BigInt(actualMarketOutput) * 90n) / 100n; // 10% slippage on actual output
+        // Use the actual market output with user's slippage setting
+        const slippageMultiplier = BigInt(Math.floor((100 - effectiveSlippage) * 100)) // Convert to basis points
+        const actualMinOutput = (BigInt(actualMarketOutput) * slippageMultiplier) / 10000n;
         console.log('📊 Using actual market output for slippage:', {
           actualMarketOutput: actualMarketOutput.toString(),
-          slippageProtection: '5%',
+          userSlippage: `${effectiveSlippage}%`,
+          slippageMultiplier: slippageMultiplier.toString(),
           finalMinOutput: actualMinOutput.toString(),
           finalMinOutputFormatted: ethers.formatUnits(actualMinOutput, selectedTokenB.decimals)
         });
@@ -893,6 +912,86 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
   return (
     <>
       <div className={clsx('relative dark:bg-[var(--background)] backdrop-blur-sm rounded-2xl border border-gray-800 p-4 w-full max-w-md mx-auto', className)}>
+        {/* Header with Settings */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Swap</h3>
+          <div className="relative" ref={settingsRef}>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+              aria-label="Settings"
+            >
+              <Cog6ToothIcon className="w-5 h-5" />
+            </button>
+            
+            {/* Settings Dropdown */}
+            {showSettings && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                <div className="p-4">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Transaction Settings</h4>
+                  
+                  {/* Slippage Tolerance */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-600 dark:text-gray-400">Slippage Tolerance</label>
+                    <div className="flex items-center space-x-2">
+                      {/* Preset buttons */}
+                      <div className="flex space-x-1">
+                        {[0.1, 0.5, 1.0].map((preset) => (
+                          <button
+                            key={preset}
+                            onClick={() => setSlippage(preset)}
+                            className={clsx(
+                              'px-2 py-1 text-xs rounded transition-colors cursor-pointer',
+                              slippage === preset
+                                ? 'bg-purple-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            )}
+                          >
+                            {preset}%
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Custom input */}
+                      <div className="flex items-center">
+                        <input
+                          type="number"
+                          value={slippage}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value)
+                            if (!isNaN(value) && value >= 0 && value <= 50) {
+                              setSlippage(value)
+                            }
+                          }}
+                          className="w-16 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0.5"
+                          min="0"
+                          max="50"
+                          step="0.1"
+                        />
+                        <span className="ml-1 text-xs text-gray-600 dark:text-gray-400">%</span>
+                      </div>
+                    </div>
+                    
+                    {/* Slippage warning */}
+                    {slippage > 5 && (
+                      <div className="flex items-center space-x-1 text-xs text-amber-600 dark:text-amber-400">
+                        <ExclamationTriangleIcon className="w-3 h-3" />
+                        <span>High slippage tolerance</span>
+                      </div>
+                    )}
+                    {slippage < 0.1 && (
+                      <div className="flex items-center space-x-1 text-xs text-amber-600 dark:text-amber-400">
+                        <ExclamationTriangleIcon className="w-3 h-3" />
+                        <span>Very low slippage may cause transaction failures</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         {/* Input Token */}
         <div className="space-y-2 mb-2">
           <div className="relative bg-gray-200/50 dark:bg-gray-800/30 rounded-xl p-4">

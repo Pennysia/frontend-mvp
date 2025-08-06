@@ -19,7 +19,7 @@ export default function SwapPage() {
             <div className="dark:bg-[var(--background)]/50">
               <h1 className="text-3xl md:text-4xl font-base text-gray-900 dark:text-white mb-4 transition-colors duration-300">Swap Tokens</h1>
               <p className="text-gray-600 text-base font-light dark:text-gray-300 mb-8 transition-colors duration-300">
-                Trade tokens with directional positions. Choose long for bullish trades or short for bearish trades.
+                Exchange tokens instantly by selecting both tokens and amounts. Configure slippage tolerance and confirm the transaction.
               </p>
               <SwapInterface />
             </div>

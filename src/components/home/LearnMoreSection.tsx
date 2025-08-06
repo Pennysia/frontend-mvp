@@ -22,7 +22,7 @@ export default function LearnMoreSection() {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                                     Comprehensive guides users and technical references for developers.
                                 </p>
-                                <button className="text-[#19192A] dark:text-white text-sm inline-flex items-center w-fit hover:bg-[#A7ADBB] bg-transparent border border-[#555C6F] font-normal py-3 px-6 rounded-full transition-all duration-200">
+                                <button className="text-[#19192A] dark:text-white text-sm inline-flex items-center w-fit hover:bg-[#A7ADBB] bg-transparent border border-[#555C6F] font-normal py-3 px-6 rounded-full transition-all duration-200 cursor-pointer">
                                     Read Docs <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                 </button>
                             </div>
@@ -48,7 +48,7 @@ export default function LearnMoreSection() {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                                     Open-source smart contracts and frontend implementations.
                                 </p>
-                                <button className="text-[#19192A] dark:text-white text-sm inline-flex items-center w-fit hover:bg-[#A7ADBB] bg-transparent border border-[#555C6F] font-normal py-3 px-6 rounded-full transition-all duration-200">
+                                <button className="text-[#19192A] dark:text-white text-sm inline-flex items-center w-fit hover:bg-[#A7ADBB] bg-transparent border border-[#555C6F] font-normal py-3 px-6 rounded-full transition-all duration-200 cursor-pointer">
                                     View on GitHub <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                 </button>
                             </div>
@@ -76,7 +76,7 @@ export default function LearnMoreSection() {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                                     Get in touch with our team for support and partnerships.
                                 </p>
-                                <button className="text-white dark:text-[#19192A] text-sm inline-flex items-center w-fit hover:bg-[#A7ADBB] bg-[#19192A] dark:bg-[#E7E8EB] border border-[#555C6F] font-normal py-3 px-6 rounded-full transition-all duration-200">
+                                <button className="text-white dark:text-[#19192A] text-sm inline-flex items-center w-fit hover:bg-[#A7ADBB] bg-[#19192A] dark:bg-[#E7E8EB] border border-[#555C6F] font-normal py-3 px-6 rounded-full transition-all duration-200 cursor-pointer">
                                     Get in Touch
                                 </button>
                             </div>

@@ -607,7 +607,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Select Token Pair</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Select Token Pair</h2>
         <p className="text-gray-400">Choose the tokens you want to provide liquidity for</p>
       </div>
 
@@ -690,7 +690,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Set Token Amounts</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Set Token Amounts</h2>
         <p className="text-gray-400">
           {poolReserves ? 'Enter amounts (ratio will be enforced)' : 'Set initial pool ratio'}
         </p>
@@ -1010,7 +1010,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">Set Position Allocation</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Set Position Allocation</h2>
           <p className="text-gray-400">Choose your directional bias for this liquidity position</p>
         </div>
 
@@ -1097,7 +1097,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         />
         <div className="p-6 pb-24 md:pb-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Add Liquidity</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Add Liquidity</h2>
             <button
               onClick={handleClose}
               className="p-2 border border-gray-200 dark:border-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors cursor-pointer"

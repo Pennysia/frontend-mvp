@@ -62,24 +62,83 @@ export default function PositionOverview({ position }: PositionOverviewProps) {
             const balances = await marketContract.balanceOf(user.wallet.address, poolId)
             const [longX, shortX, longY, shortY] = balances
 
-            // Format LP token balances with proper precision
+            // Safe formatUnits wrapper to handle decimal precision errors
+            const safeFormatUnits = (value: bigint, decimals: number): string => {
+                try {
+                    const formatted = ethers.formatUnits(value, decimals)
+                    
+                    // Check if the result has too many decimal places
+                    const parts = formatted.split('.')
+                    if (parts.length > 1 && parts[1].length > 18) {
+                        // Truncate to 18 decimal places maximum
+                        const truncated = parts[0] + '.' + parts[1].substring(0, 18).replace(/0+$/, '')
+                        console.log(`⚠️ PositionOverview: Truncated formatUnits result from ${formatted} to ${truncated}`)
+                        return truncated
+                    }
+                    
+                    return formatted
+                } catch (error) {
+                    console.error('PositionOverview: Error in safeFormatUnits:', error, 'Value:', value.toString(), 'Decimals:', decimals)
+                    return '0'
+                }
+            }
+
+            // Format LP token balances with proper precision using safe wrapper
             const formattedBalances = {
-                longX: ethers.formatUnits(longX, 18),
-                shortX: ethers.formatUnits(shortX, 18),
-                longY: ethers.formatUnits(longY, 18),
-                shortY: ethers.formatUnits(shortY, 18)
+                longX: safeFormatUnits(longX, 18),
+                shortX: safeFormatUnits(shortX, 18),
+                longY: safeFormatUnits(longY, 18),
+                shortY: safeFormatUnits(shortY, 18)
             }
 
             setLpTokenBalances(formattedBalances)
 
-            // Fetch token names using ERC20 name() function
-            const token0Contract = new ethers.Contract(position.token0Address, ERC20_ABI, provider)
-            const token1Contract = new ethers.Contract(position.token1Address, ERC20_ABI, provider)
-
-            const [token0Name, token1Name] = await Promise.all([
-                token0Contract.name(),
-                token1Contract.name()
-            ])
+            // Fetch token names with native token handling
+            let token0Name: string
+            let token1Name: string
+            
+            try {
+                // Handle token0 name (can be native)
+                if (position.token0Address === ethers.ZeroAddress || position.token0Address === '0x0000000000000000000000000000000000000000') {
+                    // Use chain-specific native currency name
+                    const network = await provider.getNetwork()
+                    const chainId = Number(network.chainId)
+                    
+                    // Map chain ID to native currency name
+                    const nativeNames: { [key: number]: string } = {
+                        1: 'Ether',          // Ethereum Mainnet
+                        11155111: 'Sepolia Ether', // Sepolia Testnet  
+                        146: 'Sonic',        // Sonic Mainnet
+                        57054: 'Sonic'       // Sonic Blaze Testnet
+                    }
+                    
+                    token0Name = nativeNames[chainId] || 'Ether' // Fallback to Ether
+                } else {
+                    const token0Contract = new ethers.Contract(position.token0Address, ERC20_ABI, provider)
+                    token0Name = await token0Contract.name()
+                }
+                
+                // Handle token1 name (should always be ERC20)
+                if (position.token1Address === ethers.ZeroAddress || position.token1Address === '0x0000000000000000000000000000000000000000') {
+                    console.warn('PositionOverview: WARNING - token1 should not be native token!')
+                    token1Name = 'Ether' // Fallback, but this shouldn't happen
+                } else {
+                    const token1Contract = new ethers.Contract(position.token1Address, ERC20_ABI, provider)
+                    token1Name = await token1Contract.name()
+                }
+                
+                console.log('PositionOverview: Token names fetched:', {
+                    token0Address: position.token0Address,
+                    token0Name,
+                    token1Address: position.token1Address,
+                    token1Name
+                })
+            } catch (nameError) {
+                console.error('PositionOverview: Error fetching token names:', nameError)
+                // Fallback to symbols if names fail
+                token0Name = token0Symbol || 'Unknown Token'
+                token1Name = token1Symbol || 'Unknown Token'
+            }
 
             setTokenNames({
                 token0Name,

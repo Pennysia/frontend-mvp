@@ -97,68 +97,84 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         return '0'
       }
       
-      // Convert to number first to handle any string input
-      let num = Number(value)
-      if (isNaN(num) || num < 0) return '0'
+      // Convert to string first to handle precision issues
+      let strValue = String(value)
       
-      // Handle very small numbers that might cause precision issues
-      if (num === 0) return '0'
-      
-      // Handle scientific notation by converting to string first and checking
-      const strValue = String(value)
+      // Handle scientific notation
       if (strValue.includes('e') || strValue.includes('E')) {
-        // Force conversion from scientific notation using parseFloat
-        num = parseFloat(strValue)
-        if (isNaN(num)) return '0'
+        const num = parseFloat(strValue)
+        if (isNaN(num) || num <= 0) return '0'
+        strValue = num.toFixed(20) // Use high precision first
       }
       
-      // For extremely small numbers, set a minimum threshold to avoid ethers.js issues
+      // Convert to number for validation
+      const num = Number(strValue)
+      if (isNaN(num) || num < 0) return '0'
+      if (num === 0) return '0'
+      
+      // For extremely small numbers, set a minimum threshold
       if (num < 1e-18) {
         return '0'
       }
       
-      // Use toFixed to limit decimal places and prevent scientific notation
-      // This ensures ethers.js can parse the result without underflow errors
-      let decimals: number
-      
-      if (num >= 1000) {
-        decimals = 2
-      } else if (num >= 100) {
-        decimals = 3
-      } else if (num >= 10) {
-        decimals = 4
-      } else if (num >= 1) {
-        decimals = 5
-      } else if (num >= 0.1) {
-        decimals = 6
-      } else if (num >= 0.01) {
-        decimals = 7
-      } else if (num >= 0.001) {
-        decimals = 8
-      } else if (num >= 0.0001) {
-        decimals = 10
-      } else if (num >= 0.00001) {
-        decimals = 12
-      } else {
-        // For extremely small numbers, use maximum safe decimals
-        decimals = 18
+      // CRITICAL: Limit to maximum 18 decimal places to prevent ethers.js underflow
+      // Count decimal places in the string representation
+      const parts = strValue.split('.')
+      if (parts.length > 1 && parts[1].length > 18) {
+        // Truncate to 18 decimal places (don't round to avoid precision issues)
+        strValue = parts[0] + '.' + parts[1].substring(0, 18)
       }
       
-      // Use toFixed to ensure consistent decimal formatting and eliminate scientific notation
-      const formatted = num.toFixed(decimals)
+      // Re-parse the truncated value
+      const truncatedNum = Number(strValue)
+      if (isNaN(truncatedNum) || truncatedNum <= 0) return '0'
+      
+      // Determine appropriate decimal places for display
+      let decimals: number
+      if (truncatedNum >= 1000) {
+        decimals = 2
+      } else if (truncatedNum >= 100) {
+        decimals = 3
+      } else if (truncatedNum >= 10) {
+        decimals = 4
+      } else if (truncatedNum >= 1) {
+        decimals = 5
+      } else if (truncatedNum >= 0.1) {
+        decimals = 6
+      } else if (truncatedNum >= 0.01) {
+        decimals = 7
+      } else if (truncatedNum >= 0.001) {
+        decimals = 8
+      } else if (truncatedNum >= 0.0001) {
+        decimals = 10
+      } else if (truncatedNum >= 0.00001) {
+        decimals = 12
+      } else {
+        // For very small numbers, limit to 18 decimals max
+        decimals = Math.min(18, 15)
+      }
+      
+      // Format with the determined decimal places
+      const formatted = truncatedNum.toFixed(decimals)
       
       // Remove trailing zeros and unnecessary decimal point
       const cleaned = formatted.replace(/\.?0+$/, '')
       
-      // Final check: if result is still in scientific notation or invalid, return '0'
+      // Final validation
       if (cleaned.includes('e') || cleaned.includes('E') || cleaned === '' || cleaned === '.') {
         return '0'
+      }
+      
+      // Double-check: ensure we don't have more than 18 decimal places
+      const finalParts = cleaned.split('.')
+      if (finalParts.length > 1 && finalParts[1].length > 18) {
+        return finalParts[0] + '.' + finalParts[1].substring(0, 18).replace(/0+$/, '')
       }
       
       return cleaned
       
     } catch (error) {
-      console.error('Error formatting number:', error)
+      console.error('Error formatting number:', error, 'Input:', value)
       return '0'
     }
   }

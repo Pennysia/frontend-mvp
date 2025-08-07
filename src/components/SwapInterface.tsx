@@ -646,8 +646,30 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
         signer
       )
 
-      // Parse input amount
-      const inputAmountWei = ethers.parseUnits(inputAmount, selectedTokenA.decimals)
+      // Safe parseUnits wrapper to handle decimal precision errors
+      const safeParseUnits = (value: string, decimals: number): bigint => {
+        try {
+          if (!value || value === '0') return 0n
+          
+          // Limit decimal places to prevent ethers.js underflow errors
+          const parts = value.split('.')
+          let safeValue = value
+          
+          if (parts.length > 1 && parts[1].length > 18) {
+            // Truncate to 18 decimal places maximum
+            safeValue = parts[0] + '.' + parts[1].substring(0, 18).replace(/0+$/, '')
+            console.log(`⚠️ Truncated swap value from ${value} to ${safeValue} to prevent ethers.js underflow`)
+          }
+          
+          return ethers.parseUnits(safeValue, decimals)
+        } catch (error) {
+          console.error('Error in safeParseUnits (swap):', error, 'Value:', value, 'Decimals:', decimals)
+          return 0n
+        }
+      }
+
+      // Parse input amount using safe wrapper
+      const inputAmountWei = safeParseUnits(inputAmount, selectedTokenA.decimals)
 
       // Create swap path
       const path = [selectedTokenA.address, selectedTokenB.address]
@@ -667,8 +689,8 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       }
 
       // Use the UI's outputAmount which is now calculated correctly using getAmountsOut
-      console.log(' Using UI calculated output amount (now correct)...')
-      const expectedOutputWei = ethers.parseUnits(outputAmount, selectedTokenB.decimals)
+      console.log('🔄 Using UI calculated output amount (now correct)...')
+      const expectedOutputWei = safeParseUnits(outputAmount, selectedTokenB.decimals)
 
       console.log(' Expected output from UI:', {
         outputAmount,

@@ -588,11 +588,33 @@ export function useLiquidity() {
       const routerContract = new ethers.Contract(routerAddress, ROUTER_ABI, signer)
       const deadline = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
 
-      // Parse amounts with correct decimals
-      const parsedAmount0Long = ethers.parseUnits(amount0Long || '0', token0Decimals)
-      const parsedAmount0Short = ethers.parseUnits(amount0Short || '0', token0Decimals)
-      const parsedAmount1Long = ethers.parseUnits(amount1Long || '0', token1Decimals)
-      const parsedAmount1Short = ethers.parseUnits(amount1Short || '0', token1Decimals)
+      // Safe parseUnits wrapper to handle decimal precision errors
+      const safeParseUnits = (value: string, decimals: number): bigint => {
+        try {
+          if (!value || value === '0') return 0n
+          
+          // Limit decimal places to prevent ethers.js underflow errors
+          const parts = value.split('.')
+          let safeValue = value
+          
+          if (parts.length > 1 && parts[1].length > 18) {
+            // Truncate to 18 decimal places maximum
+            safeValue = parts[0] + '.' + parts[1].substring(0, 18).replace(/0+$/, '')
+            console.log(`⚠️ Truncated value from ${value} to ${safeValue} to prevent ethers.js underflow`)
+          }
+          
+          return ethers.parseUnits(safeValue, decimals)
+        } catch (error) {
+          console.error('Error in safeParseUnits:', error, 'Value:', value, 'Decimals:', decimals)
+          return 0n
+        }
+      }
+
+      // Parse amounts with correct decimals using safe wrapper
+      const parsedAmount0Long = safeParseUnits(amount0Long || '0', token0Decimals)
+      const parsedAmount0Short = safeParseUnits(amount0Short || '0', token0Decimals)
+      const parsedAmount1Long = safeParseUnits(amount1Long || '0', token1Decimals)
+      const parsedAmount1Short = safeParseUnits(amount1Short || '0', token1Decimals)
 
       // Calculate minimum amounts with slippage protection (95% of expected)
       // For initial liquidity provision, we can estimate minimums based on input amounts

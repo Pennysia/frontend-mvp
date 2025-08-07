@@ -61,6 +61,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   const [isLoadingPoolData, setIsLoadingPoolData] = useState(false)
   const [calculatedPrice, setCalculatedPrice] = useState<{ tokenAToB: number; tokenBToA: number } | null>(null)
   const [showTransactionResult, setShowTransactionResult] = useState(false)
+  const [expandErrorMessage, setExpandErrorMessage] = useState(false)
   const [transactionResult, setTransactionResult] = useState<{
     success: boolean
     error?: string
@@ -89,50 +90,73 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
   // Lock background scroll when modal is open
   useScrollLock(isOpen)
   
-  // Smart number formatting with appropriate precision
+  // Smart number formatting with appropriate precision for ethers.js compatibility
   const formatSafeNumber = (value: string | number): string => {
     try {
       if (!value || value === '0' || value === 0) {
         return '0'
       }
       
-      // Convert to string first
+      // Convert to number first to handle any string input
+      let num = Number(value)
+      if (isNaN(num) || num < 0) return '0'
+      
+      // Handle very small numbers that might cause precision issues
+      if (num === 0) return '0'
+      
+      // Handle scientific notation by converting to string first and checking
       const strValue = String(value)
-      
-      // Handle scientific notation
       if (strValue.includes('e') || strValue.includes('E')) {
-        const num = Number(strValue)
+        // Force conversion from scientific notation using parseFloat
+        num = parseFloat(strValue)
         if (isNaN(num)) return '0'
-        
-        // Use toFixed for numbers with scientific notation
-        return num.toFixed(8).replace(/\.?0+$/, '') // Remove trailing zeros, max 8 decimals
       }
       
-      // Handle regular numbers
-      const num = Number(strValue)
-      if (isNaN(num)) return '0'
+      // For extremely small numbers, set a minimum threshold to avoid ethers.js issues
+      if (num < 1e-18) {
+        return '0'
+      }
       
-      // Smart precision based on magnitude
+      // Use toFixed to limit decimal places and prevent scientific notation
+      // This ensures ethers.js can parse the result without underflow errors
+      let decimals: number
+      
       if (num >= 1000) {
-        return num.toLocaleString('en-US', { maximumFractionDigits: 2 })
+        decimals = 2
       } else if (num >= 100) {
-        return num.toLocaleString('en-US', { maximumFractionDigits: 3 })
+        decimals = 3
       } else if (num >= 10) {
-        return num.toLocaleString('en-US', { maximumFractionDigits: 4 })
+        decimals = 4
       } else if (num >= 1) {
-        return num.toLocaleString('en-US', { maximumFractionDigits: 5 })
+        decimals = 5
       } else if (num >= 0.1) {
-        return num.toLocaleString('en-US', { maximumFractionDigits: 6 })
+        decimals = 6
       } else if (num >= 0.01) {
-        return num.toLocaleString('en-US', { maximumFractionDigits: 7 })
+        decimals = 7
+      } else if (num >= 0.001) {
+        decimals = 8
+      } else if (num >= 0.0001) {
+        decimals = 10
+      } else if (num >= 0.00001) {
+        decimals = 12
       } else {
-        // For very small numbers, use up to 8 decimals but remove trailing zeros
-        const formatted = num.toLocaleString('en-US', { 
-          maximumFractionDigits: 8,
-          minimumFractionDigits: 0
-        })
-        return formatted.replace(/\.?0+$/, '')
+        // For extremely small numbers, use maximum safe decimals
+        decimals = 18
       }
+      
+      // Use toFixed to ensure consistent decimal formatting and eliminate scientific notation
+      const formatted = num.toFixed(decimals)
+      
+      // Remove trailing zeros and unnecessary decimal point
+      const cleaned = formatted.replace(/\.?0+$/, '')
+      
+      // Final check: if result is still in scientific notation or invalid, return '0'
+      if (cleaned.includes('e') || cleaned.includes('E') || cleaned === '' || cleaned === '.') {
+        return '0'
+      }
+      
+      return cleaned
+      
     } catch (error) {
       console.error('Error formatting number:', error)
       return '0'
@@ -411,13 +435,36 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
     const tokenBBullishRatio = (100 - sliderValue) / 100 // Token B bullish percentage (mirrored)
     const tokenBBearishRatio = sliderValue / 100 // Token B bearish percentage (mirrored)
     
-    // For token A (first token) - use safe formatting to avoid scientific notation
-    const amount0Long = formatSafeNumber(totalAmountA * tokenABullishRatio)
-    const amount0Short = formatSafeNumber(totalAmountA * tokenABearishRatio)
-  
-    // For token B (second token) - mirrored allocation
-    const amount1Long = formatSafeNumber(totalAmountB * tokenBBullishRatio)
-    const amount1Short = formatSafeNumber(totalAmountB * tokenBBearishRatio)
+    // Calculate raw amounts first
+    const rawAmount0Long = totalAmountA * tokenABullishRatio
+    const rawAmount0Short = totalAmountA * tokenABearishRatio
+    const rawAmount1Long = totalAmountB * tokenBBullishRatio
+    const rawAmount1Short = totalAmountB * tokenBBearishRatio
+    
+    // Simple function to avoid scientific notation
+    const toSafeString = (value: number): string => {
+      if (value === 0) return '0'
+      
+      // Convert to string and check for scientific notation
+      let str = value.toString()
+      if (str.includes('e') || str.includes('E')) {
+        // If very small, just return '0'
+        if (value < 0.000001) {
+          return '0'
+        }
+        // Use toFixed with high precision to expand scientific notation
+        str = value.toFixed(20).replace(/\.?0+$/, '')
+      }
+      
+      return str
+    }
+    
+    // Use ethers.js parseUnits to properly format amounts for contract calls
+    // This avoids scientific notation and precision issues
+    const amount0Long = toSafeString(rawAmount0Long)
+    const amount0Short = toSafeString(rawAmount0Short)
+    const amount1Long = toSafeString(rawAmount1Long)
+    const amount1Short = toSafeString(rawAmount1Short)
     
     try {
 
@@ -1128,7 +1175,8 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
       {/* Transaction Result Modal */}
       {showTransactionResult && transactionResult && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -1229,8 +1277,36 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
                   
                   {/* Error Details */}
                   <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                    <p className="text-red-400 text-sm mb-2">Error:</p>
-                    <p className="text-white text-sm break-words">{transactionResult.error}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-red-400 text-sm">Error:</p>
+                      {transactionResult.error && transactionResult.error.length > 100 && (
+                        <button
+                          onClick={() => setExpandErrorMessage(!expandErrorMessage)}
+                          className="text-red-400 hover:text-red-300 text-xs flex items-center gap-1 cursor-pointer"
+                        >
+                          {expandErrorMessage ? 'Collapse' : 'Expand'}
+                          <svg 
+                            className={`w-3 h-3 transition-transform ${expandErrorMessage ? 'rotate-180' : ''}`} 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                    <div className="text-red-300 text-sm break-words">
+                      {transactionResult.error && transactionResult.error.length > 100 ? (
+                        expandErrorMessage ? (
+                          transactionResult.error
+                        ) : (
+                          `${transactionResult.error.slice(0, 100)}...`
+                        )
+                      ) : (
+                        transactionResult.error
+                      )}
+                    </div>
                   </div>
                   
                   {/* Attempted Transaction Details */}
@@ -1288,6 +1364,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
               >
                 {transactionResult.success ? 'Done' : 'Try Again'}
               </button>
+            </div>
             </div>
           </div>
         </div>

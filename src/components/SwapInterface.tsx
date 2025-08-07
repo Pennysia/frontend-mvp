@@ -652,11 +652,25 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       // Create swap path
       const path = [selectedTokenA.address, selectedTokenB.address]
 
+      // Validate path addresses
+      console.log(' Validating swap path:', {
+        tokenA: selectedTokenA.address,
+        tokenB: selectedTokenB.address,
+        isTokenANative: selectedTokenA.address === ethers.ZeroAddress,
+        isTokenBNative: selectedTokenB.address === ethers.ZeroAddress,
+        path
+      })
+
+      // Validate that tokens are different
+      if (selectedTokenA.address === selectedTokenB.address) {
+        throw new Error('Cannot swap the same token')
+      }
+
       // Use the UI's outputAmount which is now calculated correctly using getAmountsOut
-      console.log('🔍 Using UI calculated output amount (now correct)...')
+      console.log(' Using UI calculated output amount (now correct)...')
       const expectedOutputWei = ethers.parseUnits(outputAmount, selectedTokenB.decimals)
 
-      console.log('✅ Expected output from UI:', {
+      console.log(' Expected output from UI:', {
         outputAmount,
         expectedOutputWei: expectedOutputWei.toString(),
         formatted: ethers.formatUnits(expectedOutputWei, selectedTokenB.decimals)
@@ -686,19 +700,23 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
       // Declare swap transaction variable
       let swapTx: any
 
-      // Check if we need to approve tokens first
-      const tokenContract = new ethers.Contract(
-        selectedTokenA.address,
-        ['function allowance(address owner, address spender) view returns (uint256)', 'function approve(address spender, uint256 amount) returns (bool)'],
-        signer
-      )
+      // Check if we need to approve tokens first (skip for native tokens)
+      if (selectedTokenA.address !== ethers.ZeroAddress && selectedTokenA.address !== '0x0000000000000000000000000000000000000000') {
+        const tokenContract = new ethers.Contract(
+          selectedTokenA.address,
+          ['function allowance(address owner, address spender) view returns (uint256)', 'function approve(address spender, uint256 amount) returns (bool)'],
+          signer
+        )
 
-      const currentAllowance = await tokenContract.allowance(address, routerAddress)
+        const currentAllowance = await tokenContract.allowance(address, routerAddress)
 
-      // Approve if needed
-      if (BigInt(currentAllowance) < BigInt(inputAmountWei)) {
-        const approveTx = await tokenContract.approve(routerAddress, inputAmountWei)
-        await approveTx.wait()
+        // Approve if needed
+        if (BigInt(currentAllowance) < BigInt(inputAmountWei)) {
+          const approveTx = await tokenContract.approve(routerAddress, inputAmountWei)
+          await approveTx.wait()
+        }
+      } else {
+        console.log('✅ Native token detected in swap, skipping approval')
       }
 
       // First, simulate the swap to see what the market would actually return
@@ -750,13 +768,57 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
       // If simulation succeeded, execute the actual swap
       if (!actualMarketOutput) {
-        swapTx = await routerContract.swap(
-          inputAmountWei,
-          minOutputAmount,
+        // Calculate native token value to send with transaction
+        let nativeTokenValue = 0n
+        if (selectedTokenA.address === ethers.ZeroAddress || selectedTokenA.address === '0x0000000000000000000000000000000000000000') {
+          nativeTokenValue = BigInt(inputAmountWei)
+        }
+
+        console.log('🚀 Executing swap with parameters:', {
+          inputAmountWei: inputAmountWei.toString(),
+          minOutputAmount: minOutputAmount.toString(),
           path,
           address,
-          deadline
-        )
+          deadline,
+          nativeTokenValue: nativeTokenValue.toString(),
+          gasLimit: '500000' // Increase gas limit
+        })
+
+        try {
+          swapTx = await routerContract.swap(
+            inputAmountWei,
+            minOutputAmount,
+            path,
+            address,
+            deadline,
+            { 
+              value: nativeTokenValue, // Send native token value if needed
+              gasLimit: 500000 // Increase gas limit to prevent out-of-gas
+            }
+          )
+        } catch (contractError: any) {
+          console.error('❌ Contract execution error:', contractError)
+          
+          // Try to decode the error
+          let errorMessage = 'Unknown contract error'
+          if (contractError?.data) {
+            console.log('Error data:', contractError.data)
+            // Check for known error selectors
+            if (contractError.data === '0x3e032a3b') {
+              errorMessage = 'Slippage tolerance exceeded - try increasing slippage or reducing amount'
+            } else if (contractError.data === '0x8679b0c0') {
+              errorMessage = 'Forbidden - insufficient permissions or invalid operation'
+            } else if (contractError.data === '0xa04eeb03') {
+              errorMessage = 'Pair not found - this trading pair may not exist'
+            } else if (contractError.data === '0x009e2872') {
+              errorMessage = 'Invalid path - check token addresses'
+            } else if (contractError.data === '0xc24d2823') {
+              errorMessage = 'Custom contract error (0xc24d2823) - possible insufficient liquidity or invalid parameters'
+            }
+          }
+          
+          throw new Error(`Swap failed: ${errorMessage}. Original error: ${contractError?.message || contractError}`)
+        }
       }
 
       // Wait for transaction confirmation

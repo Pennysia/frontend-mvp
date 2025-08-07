@@ -85,6 +85,12 @@ export function useLiquidity() {
       const provider = await getProvider()
       if (!provider || !address) return false
 
+      // Native token (address(0)) doesn't need allowance - it's sent directly
+      if (tokenAddress === ethers.ZeroAddress || tokenAddress === '0x0000000000000000000000000000000000000000') {
+        console.log('✅ Native token detected, skipping allowance check')
+        return true
+      }
+
       const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
       const allowance = await tokenContract.allowance(address, spenderAddress)
       
@@ -117,19 +123,25 @@ export function useLiquidity() {
   const approveToken = useCallback(async (
     tokenAddress: string,
     spenderAddress: string,
-    amount: string,
+    amount?: string,
     decimals: number = 18
   ): Promise<boolean> => {
     try {
       const signer = await getSigner()
-      if (!signer) throw new Error('No signer available')
-
-      // Validate addresses
+      if (!signer) {
+        throw new Error('No signer available')
+      }
       if (!ethers.isAddress(tokenAddress)) {
         throw new Error(`Invalid token address: ${tokenAddress}`)
       }
       if (!ethers.isAddress(spenderAddress)) {
         throw new Error(`Invalid spender address: ${spenderAddress}`)
+      }
+
+      // Native token (address(0)) doesn't need approval - it's sent directly
+      if (tokenAddress === ethers.ZeroAddress || tokenAddress === '0x0000000000000000000000000000000000000000') {
+        console.log('✅ Native token detected, skipping approval')
+        return true
       }
 
       const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
@@ -582,11 +594,31 @@ export function useLiquidity() {
       const parsedAmount1Long = ethers.parseUnits(amount1Long || '0', token1Decimals)
       const parsedAmount1Short = ethers.parseUnits(amount1Short || '0', token1Decimals)
 
-      // Set minimum amounts (90% of expected for slippage protection)
-      const longXMinimum = 0n // Will be calculated by Router
-      const shortXMinimum = 0n
-      const longYMinimum = 0n
-      const shortYMinimum = 0n
+      // Calculate minimum amounts with slippage protection (95% of expected)
+      // For initial liquidity provision, we can estimate minimums based on input amounts
+      const slippageTolerance = 5 // 5% slippage tolerance
+      const slippageMultiplier = BigInt(10000 - slippageTolerance * 100) // 9500 for 5%
+      
+      // Estimate minimum LP tokens based on input amounts (conservative estimate)
+      // For new pairs, LP tokens are roughly proportional to input amounts
+      const estimatedLongX = (parsedAmount0Long + parsedAmount1Long) / 2n
+      const estimatedShortX = (parsedAmount0Short + parsedAmount1Short) / 2n
+      const estimatedLongY = (parsedAmount0Long + parsedAmount1Long) / 2n
+      const estimatedShortY = (parsedAmount0Short + parsedAmount1Short) / 2n
+      
+      const longXMinimum = (estimatedLongX * slippageMultiplier) / 10000n
+      const shortXMinimum = (estimatedShortX * slippageMultiplier) / 10000n
+      const longYMinimum = (estimatedLongY * slippageMultiplier) / 10000n
+      const shortYMinimum = (estimatedShortY * slippageMultiplier) / 10000n
+
+      // Calculate native token value to send with transaction
+      let nativeTokenValue = 0n
+      if (token0Address === ethers.ZeroAddress || token0Address === '0x0000000000000000000000000000000000000000') {
+        nativeTokenValue += parsedAmount0Long + parsedAmount0Short
+      }
+      if (token1Address === ethers.ZeroAddress || token1Address === '0x0000000000000000000000000000000000000000') {
+        nativeTokenValue += parsedAmount1Long + parsedAmount1Short
+      }
 
       console.log('📝 Calling addLiquidity with:', {
         token0Address,
@@ -595,25 +627,171 @@ export function useLiquidity() {
         parsedAmount0Short: parsedAmount0Short.toString(),
         parsedAmount1Long: parsedAmount1Long.toString(),
         parsedAmount1Short: parsedAmount1Short.toString(),
+        nativeTokenValue: nativeTokenValue.toString(),
         deadline
       })
 
-      const tx = await routerContract.addLiquidity(
+      // Pre-flight checks before executing addLiquidity
+      console.log('🔍 Performing pre-flight checks...')
+      
+      // Check native token balance if needed
+      if (nativeTokenValue > 0n) {
+        const balance = await provider!.getBalance(address!)
+        console.log('💰 Native token balance check:', {
+          required: ethers.formatEther(nativeTokenValue),
+          available: ethers.formatEther(balance),
+          sufficient: balance >= nativeTokenValue
+        })
+        
+        if (balance < nativeTokenValue) {
+          throw new Error(`Insufficient native token balance. Required: ${ethers.formatEther(nativeTokenValue)} ETH, Available: ${ethers.formatEther(balance)} ETH`)
+        }
+      }
+      
+      // Check ERC20 token balance and allowance if needed
+      const checkAmount0 = parsedAmount0Long + parsedAmount0Short
+      const checkAmount1 = parsedAmount1Long + parsedAmount1Short
+      
+      if (token0Address !== ethers.ZeroAddress && checkAmount0 > 0n) {
+        const token0Contract = new ethers.Contract(token0Address, ['function balanceOf(address) view returns (uint256)', 'function allowance(address,address) view returns (uint256)'], provider!)
+        const balance0 = await token0Contract.balanceOf(address!)
+        const allowance0 = await token0Contract.allowance(address!, routerAddress)
+        
+        console.log('💰 Token0 balance/allowance check:', {
+          token: token0Address,
+          required: checkAmount0.toString(),
+          balance: balance0.toString(),
+          allowance: allowance0.toString(),
+          balanceSufficient: BigInt(balance0.toString()) >= checkAmount0,
+          allowanceSufficient: BigInt(allowance0.toString()) >= checkAmount0
+        })
+        
+        if (BigInt(balance0.toString()) < checkAmount0) {
+          throw new Error(`Insufficient token0 balance. Required: ${checkAmount0.toString()}, Available: ${balance0.toString()}`)
+        }
+        if (BigInt(allowance0.toString()) < checkAmount0) {
+          throw new Error(`Insufficient token0 allowance. Required: ${checkAmount0.toString()}, Allowed: ${allowance0.toString()}`)
+        }
+      }
+      
+      if (token1Address !== ethers.ZeroAddress && checkAmount1 > 0n) {
+        const token1Contract = new ethers.Contract(token1Address, ['function balanceOf(address) view returns (uint256)', 'function allowance(address,address) view returns (uint256)'], provider!)
+        const balance1 = await token1Contract.balanceOf(address!)
+        const allowance1 = await token1Contract.allowance(address!, routerAddress)
+        
+        console.log('💰 Token1 balance/allowance check:', {
+          token: token1Address,
+          required: checkAmount1.toString(),
+          balance: balance1.toString(),
+          allowance: allowance1.toString(),
+          balanceSufficient: BigInt(balance1.toString()) >= checkAmount1,
+          allowanceSufficient: BigInt(allowance1.toString()) >= checkAmount1
+        })
+        
+        if (BigInt(balance1.toString()) < checkAmount1) {
+          throw new Error(`Insufficient token1 balance. Required: ${checkAmount1.toString()}, Available: ${balance1.toString()}`)
+        }
+        if (BigInt(allowance1.toString()) < checkAmount1) {
+          throw new Error(`Insufficient token1 allowance. Required: ${checkAmount1.toString()}, Allowed: ${allowance1.toString()}`)
+        }
+      }
+      
+      console.log('✅ All pre-flight checks passed!')
+      
+      console.log('🚀 Executing addLiquidity with final parameters:', {
         token0Address,
         token1Address,
-        parsedAmount0Long,
-        parsedAmount0Short,
-        parsedAmount1Long,
-        parsedAmount1Short,
-        longXMinimum,
-        shortXMinimum,
-        longYMinimum,
-        shortYMinimum,
-        address || '', // to
-        deadline
-      )
+        parsedAmount0Long: parsedAmount0Long.toString(),
+        parsedAmount0Short: parsedAmount0Short.toString(),
+        parsedAmount1Long: parsedAmount1Long.toString(),
+        parsedAmount1Short: parsedAmount1Short.toString(),
+        longXMinimum: longXMinimum.toString(),
+        shortXMinimum: shortXMinimum.toString(),
+        longYMinimum: longYMinimum.toString(),
+        shortYMinimum: shortYMinimum.toString(),
+        to: address,
+        deadline,
+        nativeTokenValue: nativeTokenValue.toString(),
+        gasLimit: '800000'
+      })
 
-      await tx.wait()
+      let tx
+      try {
+        tx = await routerContract.addLiquidity(
+          token0Address,
+          token1Address,
+          parsedAmount0Long,
+          parsedAmount0Short,
+          parsedAmount1Long,
+          parsedAmount1Short,
+          longXMinimum,
+          shortXMinimum,
+          longYMinimum,
+          shortYMinimum,
+          address || '', // to
+          deadline,
+          { 
+            value: nativeTokenValue, // Send native token value if needed
+            gasLimit: 800000 // Increase gas limit
+          }
+        )
+      } catch (contractError: any) {
+        console.error('❌ AddLiquidity contract execution error:', contractError)
+        
+        // Try to decode the error
+        let errorMessage = 'Unknown contract error'
+        if (contractError?.data) {
+          console.log('Error data:', contractError.data)
+          // Check for known error selectors
+          if (contractError.data === '0x3e032a3b') {
+            errorMessage = 'Slippage tolerance exceeded - try reducing amounts or increasing slippage'
+          } else if (contractError.data === '0x8679b0c0') {
+            errorMessage = 'Forbidden - insufficient permissions or invalid operation'
+          } else if (contractError.data === '0xa04eeb03') {
+            errorMessage = 'Pair not found - this trading pair may not exist'
+          } else if (contractError.data === '0x009e2872') {
+            errorMessage = 'Invalid path - check token addresses'
+          } else if (contractError.data === '0xb56cf011') {
+            errorMessage = 'Minimum liquidity requirement not met - try increasing amounts'
+          } else if (contractError.data === '0xc24d2823') {
+            errorMessage = 'Custom contract error (0xc24d2823) - possible issues: insufficient balance, invalid token pair, or contract state issue'
+          }
+        }
+        
+        throw new Error(`AddLiquidity failed: ${errorMessage}. Original error: ${contractError?.message || contractError}`)
+      }
+
+      console.log('✅ AddLiquidity transaction submitted:', tx.hash)
+      
+      const receipt = await tx.wait()
+      
+      // Check if transaction was successful
+      if (receipt.status === 0) {
+        console.error('❌ Transaction reverted:', {
+          hash: tx.hash,
+          blockNumber: receipt.blockNumber,
+          gasUsed: receipt.gasUsed.toString(),
+          logs: receipt.logs,
+          status: receipt.status
+        })
+        
+        // Analyze the failure
+        let failureReason = 'Unknown reason'
+        if (receipt.gasUsed < 50000n) {
+          failureReason = 'Transaction failed very early - likely a require() or revert() in the contract'
+        } else if (receipt.logs.length === 0) {
+          failureReason = 'No events emitted - transaction reverted before completing any operations'
+        }
+        
+        throw new Error(`AddLiquidity transaction reverted. ${failureReason}. Transaction hash: ${tx.hash}. Check the blockchain explorer for more details.`)
+      }
+      
+      console.log('✅ AddLiquidity transaction confirmed:', {
+        hash: tx.hash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString(),
+        status: receipt.status
+      })
       
       // Refresh positions after successful transaction
       await fetchPositions()
@@ -704,7 +882,8 @@ export function useLiquidity() {
         0n, // amount0Minimum - minimum token0 to receive
         0n, // amount1Minimum - minimum token1 to receive
         address, // to - recipient
-        deadline
+        deadline,
+        { value: 0n } // No native token value needed for removeLiquidity
       )
 
       const receipt = await tx.wait()

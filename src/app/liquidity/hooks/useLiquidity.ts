@@ -402,20 +402,47 @@ export function useLiquidity() {
                         console.error(`fetchPositions: Could not verify pair ID for ${pairIdStr}:`, verifyError)
                       }
                       
-                      // Get token symbols
+                      // Get token symbols with native token handling
                       try {
-                        const token0Contract = new ethers.Contract(token0Address, ERC20_ABI, provider)
-                        const token1Contract = new ethers.Contract(token1Address, ERC20_ABI, provider)
+                        // Handle token0 symbol (can be native)
+                        if (token0Address === ethers.ZeroAddress || token0Address === '0x0000000000000000000000000000000000000000') {
+                          // Use chain-specific native currency symbol
+                          const network = await provider.getNetwork()
+                          const chainId = Number(network.chainId)
+                          
+                          // Map chain ID to native currency symbol
+                          const nativeSymbols: { [key: number]: string } = {
+                            1: 'ETH',        // Ethereum Mainnet
+                            11155111: 'ETH', // Sepolia Testnet  
+                            146: 'S',        // Sonic Mainnet
+                            57054: 'S'       // Sonic Blaze Testnet
+                          }
+                          
+                          token0Symbol = nativeSymbols[chainId] || 'ETH' // Fallback to ETH
+                          console.log(`fetchPositions: Using native token symbol '${token0Symbol}' for chain ${chainId}`)
+                        } else {
+                          const token0Contract = new ethers.Contract(token0Address, ERC20_ABI, provider)
+                          token0Symbol = await token0Contract.symbol()
+                        }
                         
-                        const [symbol0, symbol1] = await Promise.all([
-                          token0Contract.symbol(),
-                          token1Contract.symbol()
-                        ])
+                        // Handle token1 symbol (should always be ERC20 according to your constraint)
+                        if (token1Address === ethers.ZeroAddress || token1Address === '0x0000000000000000000000000000000000000000') {
+                          console.warn(`fetchPositions: WARNING - token1 should not be native token according to protocol constraints!`)
+                          token1Symbol = 'ETH' // Fallback, but this shouldn't happen
+                        } else {
+                          const token1Contract = new ethers.Contract(token1Address, ERC20_ABI, provider)
+                          token1Symbol = await token1Contract.symbol()
+                        }
                         
-                        token0Symbol = symbol0
-                        token1Symbol = symbol1
+                        console.log(`fetchPositions: Token symbols fetched:`, {
+                          token0Address,
+                          token0Symbol,
+                          token1Address, 
+                          token1Symbol
+                        })
                       } catch (symbolError) {
                         console.warn(`fetchPositions: Could not fetch token symbols for pair ${pairIdStr}:`, symbolError)
+                        // Keep the fallback values TKN0/TKN1 only if we really can't fetch anything
                       }
                       
                       // Calculate actual token values using quoteReserve

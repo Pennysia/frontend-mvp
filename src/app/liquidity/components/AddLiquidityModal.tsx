@@ -1017,8 +1017,8 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
         {/* Single Slider */}
         <div className="space-y-4">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span className="text-gray-400">0% {selectedTokenA?.symbol} Bullish</span>
-            <span className="text-gray-400">100% {selectedTokenA?.symbol} Bullish</span>
+            <span className="text-gray-400">Bearish on {selectedTokenA?.symbol}</span>
+            <span className="text-gray-400">Bullish on {selectedTokenA?.symbol}</span>
           </div>
           
           <div className="relative">
@@ -1032,7 +1032,7 @@ export default function AddLiquidityModal({ isOpen, onClose, selectedPosition, o
                 setBullishPercentage(value)
                 setBearishPercentage(100 - value)
               }}
-              className="w-full h-3 bg-gradient-to-r from-green-500 to-red-500 rounded-lg appearance-none cursor-pointer slider"
+              className="w-full h-3 bg-gradient-to-r from-red-500 to-green-500 rounded-lg appearance-none cursor-pointer slider"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>0%</span>

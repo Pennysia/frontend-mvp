@@ -1239,7 +1239,7 @@ export default function SwapInterface({ className }: SwapInterfaceProps) {
 
       {/* Transaction Result Modal */}
       {showTransactionResult && transactionResult && (
-        <div className="fixed top-0 left-0 right-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ bottom: '80px' }}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
           <div className="bg-gray-800 rounded-2xl border border-gray-700 w-full max-w-sm sm:max-w-md max-h-full flex flex-col">
             {/* Scrollable Content Container */}
             <div className="overflow-y-auto flex-1 p-6">

@@ -486,7 +486,7 @@ export default function RemoveLiquidityModal({ isOpen, onClose, position, onAddL
       
       {/* Transaction Result Modal */}
       {showTransactionResult && transactionResult && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">

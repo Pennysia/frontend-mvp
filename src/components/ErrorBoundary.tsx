@@ -44,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Component Error
               </h3>
               <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                This component encountered an error and couldn't render properly.
+                This component encountered an error and couldn&apos;t render properly.
               </p>
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="mb-3">

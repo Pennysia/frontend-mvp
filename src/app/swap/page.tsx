@@ -1,12 +1,6 @@
 'use client'
 
 import SwapInterface from '@/components/SwapInterface'
-import { 
-  ArrowTrendingUpIcon, 
-  ArrowTrendingDownIcon,
-  ChartBarIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline'
 
 export default function SwapPage() {
   return (

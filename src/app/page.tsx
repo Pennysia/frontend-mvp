@@ -18,9 +18,6 @@ const FAQSection = dynamic(() => import("@/components/home/FAQSection"), {
   loading: () => <div className="h-32 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-4xl" />
 });
 
-const CTASection = dynamic(() => import("@/components/home/CTASection"), {
-  loading: () => <div className="h-24 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-6xl" />
-});
 
 const LearnMoreSection = dynamic(() => import("@/components/home/LearnMoreSection"), {
   loading: () => <div className="h-32 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-xl mx-auto max-w-6xl" />

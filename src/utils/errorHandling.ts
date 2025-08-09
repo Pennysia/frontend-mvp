@@ -1,3 +1,4 @@
+import React from 'react'
 import toast from 'react-hot-toast'
 
 // Common error types in DeFi applications
@@ -216,7 +217,7 @@ export function withErrorBoundary<P extends object>(
 
     if (error && fallback) {
       const FallbackComponent = fallback
-      return <FallbackComponent error={error} retry={retry} />
+      return React.createElement(FallbackComponent, { error, retry })
     }
 
     if (error) {
@@ -224,7 +225,8 @@ export function withErrorBoundary<P extends object>(
     }
 
     try {
-      return <Component {...props} />
+      // Use createElement to avoid JSX in .ts file
+      return React.createElement(Component as React.ComponentType<any>, props as any)
     } catch (err) {
       const appError = classifyError(err)
       setError(appError)

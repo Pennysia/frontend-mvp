@@ -6,7 +6,7 @@ import Image from 'next/image'
 
 function TechnologySection() {
   return (
-    <div className="max-w-6xl mx-auto md:mt-20 mb-16 px-4 sm:px-0">
+    <div className="max-w-6xl mx-auto mt-64 mb-16 px-4 md:pt-48">
       <h2 className="text-3xl md:text-4xl font-base text-center text-[#2E2F46] dark:text-white mb-24">
         Built to leverage your on-chain strategy.
       </h2>

@@ -9,7 +9,7 @@ function FeatureCards() {
             <h3 className="text-3xl md:text-4xl font-base text-[#2E2F46] dark:text-white mb-4 text-center pt-24 mb-24">
                 Build markets with ease. Directed by your conviction.
             </h3>
-            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 px-4 sm:px-0">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 px-4">
                 {/* Card 1 */}
                 <div className="p-6 bg-white dark:bg-[#555C6F]/10 backdrop-blur-sm rounded-2xl text-left border border-gray-300 dark:border-gray-800">
                     <div className="w-full h-auto mx-auto my-2 flex items-center justify-center">

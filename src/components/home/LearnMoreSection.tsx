@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function LearnMoreSection() {
     return (
-        <div className="max-w-6xl mx-auto pb-48 px-4 sm:px-0">
+        <div className="max-w-6xl mx-auto py-36 px-4">
             <h2 className="text-3xl md:text-4xl font-base text-center text-[#2E2F46] dark:text-white mb-24">
                 Learn more.
             </h2>

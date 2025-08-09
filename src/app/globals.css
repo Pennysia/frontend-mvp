@@ -2,16 +2,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
+  /* Match page.tsx light background (Tailwind gray-50) */
+  --background: #f9fafb;
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f0f0f;
-    --foreground: #ededed47;
-  }
-}
 
 .dark {
   --background: #0f0f0f;

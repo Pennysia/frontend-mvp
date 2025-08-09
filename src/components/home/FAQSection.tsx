@@ -4,7 +4,7 @@ import React from 'react'
 
 function FAQSection() {
   return (
-    <div className="max-w-5xl mx-auto py-20 my-48 px-4 sm:px-0 bg-transparent backdrop-blur-sm rounded-2xl">
+    <div className="max-w-6xl mx-auto py-36 px-4 sm:px-0 bg-transparent backdrop-blur-sm rounded-2xl">
       <h2 className="text-3xl md:text-4xl font-base text-center text-[#2E2F46] dark:text-white mb-24">
         Frequently Asked Questions.
       </h2>

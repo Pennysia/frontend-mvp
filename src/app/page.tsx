@@ -26,7 +26,7 @@ const LearnMoreSection = dynamic(() => import("@/components/home/LearnMoreSectio
 export default function Home() {
   return (
     <div className=" min-h-screen bg-gray-50 dark:bg-[var(--background)]">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="w-full">
         {/* Hero Section */}
         <HeroSection />
 
@@ -38,9 +38,6 @@ export default function Home() {
 
         {/* Feature Cards */}
         <FeatureCards />
-
-        {/* Another Decorative Zigzag */}
-        <ZigzagDecorator />
 
         {/* FAQ Section */}
         <FAQSection />

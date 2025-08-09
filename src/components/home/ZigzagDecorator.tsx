@@ -4,7 +4,7 @@ import React from 'react'
 
 export default function ZigzagDecorator() {
   return (
-    <div className="relative w-full max-w-7xl mx-auto mt-16 mb-8">
+    <div className="relative w-full max-w-7xl mx-auto py-16">
       {/* Zigzag 1 */}
       <svg
         className="absolute -top-4 left-0 w-full h-8 opacity-20"

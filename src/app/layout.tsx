@@ -6,6 +6,7 @@ import PrivyWrapper from '@/contexts/PrivyProvider'
 import AuthBridge from '@/components/AuthBridge'
 import Header from '@/components/Header'
 import BottomNavigation from '@/components/BottomNavigation'
+import Script from 'next/script'
 import "./globals.css"
 
 const inter = Inter({ 
@@ -32,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preload critical resources */}
         <link rel="preload" href="/pennysia-brandkit/full-logo/light-mode-full-logo.svg" as="image" />
@@ -40,6 +41,16 @@ export default function RootLayout({
         <link rel="preconnect" href="https://tokens.uniswap.org" />
         <link rel="dns-prefetch" href="https://eth.llamarpc.com" />
         <link rel="dns-prefetch" href="https://rpc.blaze.soniclabs.com" />
+        {/* Theme setter before React mounts to avoid flash */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(() => { try {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = (saved === 'light' || saved === 'dark') ? saved : (prefersDark ? 'dark' : 'light');
+            document.documentElement.classList.remove('light','dark');
+            document.documentElement.classList.add(theme);
+          } catch (e) {} })();`}
+        </Script>
       </head>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider>

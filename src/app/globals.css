@@ -5,8 +5,8 @@
   /* Match page.tsx light background (Tailwind gray-50) */
   --background: #f9fafb;
   --foreground: #171717;
+  color-scheme: light dark;
 }
-
 
 .dark {
   --background: #0f0f0f;

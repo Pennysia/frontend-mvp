@@ -41,6 +41,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://tokens.uniswap.org" />
         <link rel="dns-prefetch" href="https://eth.llamarpc.com" />
         <link rel="dns-prefetch" href="https://rpc.blaze.soniclabs.com" />
+        {/* Color scheme hints and browser UI theme colors */}
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9fafb" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
         {/* Theme setter before React mounts to avoid flash */}
         <Script id="theme-init" strategy="beforeInteractive">
           {`(() => { try {

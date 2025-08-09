@@ -44,7 +44,7 @@ export default function HeroSection() {
           The first AMM where you can earn from both sides of every trade.
         </p>
 
-        <div className="flex flex-col sm:flex-col gap-2 justify-center">
+        <div className="flex flex-col sm:flex-col gap-2 justify-center w-full items-center">
           {/* <a
             href="/swap"
             className="px-8 py-3 text-white bg-[#5B7AF6] hover:bg-[#4967DC] rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
@@ -54,7 +54,7 @@ export default function HeroSection() {
           </a> */}
           <a
             href="/liquidity"
-            className="px-20 py-4 text-white dark:text-[#19192A] hover:bg-[#A7ADBB] bg-[#19192A] dark:bg-[#E7E8EB] rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)] shadow-lg"
+            className="w-fit px-20 md:px-24 py-4 text-white dark:text-[#19192A] hover:bg-[#A7ADBB] bg-[#19192A] dark:bg-[#E7E8EB] rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)] shadow-lg"
           >
             <span>Get Started</span>
           </a>
